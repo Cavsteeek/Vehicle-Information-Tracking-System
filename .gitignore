@@ -1,0 +1,13 @@
+#Environments
+.env
+.venv/
+venv/
+
+# Python Cache
+__pycache__/
+
+#Frontend
+node_modules/
+
+#IDE
+.vscode/
