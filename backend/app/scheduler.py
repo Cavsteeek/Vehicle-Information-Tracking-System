@@ -2,16 +2,22 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import date
 from sqlalchemy.orm import Session
 from .database import SessionLocal
-from .models import VehicleDocument
+from .models import VehicleDocument, User
 from .emailService import send_email
 
 scheduler = BackgroundScheduler()
 
 def check_document_expiries():
+    """
+    Runs daily.
+    Checks all vehicle documents.
+    Sends reminder emails to ALL registered users.
+    """
     db: Session = SessionLocal()
     today = date.today()
 
     documents = db.query(VehicleDocument).all()
+    users = db.query(User).all()  # get all registered users
 
     for doc in documents:
         days_left = (doc.expiry_date - today).days
@@ -24,20 +30,24 @@ def check_document_expiries():
             body = f"""
 Hello,
 
-Reminder that your vehicle document is nearing expiry.
+This is a reminder that a vehicle document is nearing expiry.
 
 Document: {doc.document_type}
 Expiry Date: {doc.expiry_date}
 Days Remaining: {days_left}
 
-Please renew before expiry.
+Please ensure renewal before the expiry date.
+
+— Vehicle Monitoring System
 """
 
-            send_email(
-                to="your_email_here@gmail.com",
-                subject=subject,
-                body=body
-            )
+            # Send email to every registered user
+            for user in users:
+                send_email(
+                    to=user.email,
+                    subject=subject,
+                    body=body
+                )
 
     db.close()
 
