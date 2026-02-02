@@ -1,0 +1,132 @@
+@token = ""
+
+### ===============================
+### REGISTER USER
+### ===============================
+POST http://127.0.0.1:8000/auth/register
+Content-Type: application/json
+
+{
+  "name": "Ikemdinachi",
+  "email": "chimdiebubeuzo@gmail.com",
+  "password": "uzo"
+}
+
+###
+
+### ===============================
+### LOGIN
+### ===============================
+POST http://127.0.0.1:8000/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@test.com",
+  "password": "password123"
+}
+
+###
+
+### ===============================
+### CREATE VEHICLE WITH DOCUMENTS
+### ===============================
+POST http://127.0.0.1:8000/vehicles
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "registration_number": "ABC-1234",
+  "type": "Car",
+  "owner": "John Doe",
+  "purchase_date": "2023-05-01",
+  "remark": "Company vehicle",
+  "documents": [
+    {
+      "document_type": "Insurance",
+      "expiry_date": "2026-02-28",
+      "reminder_start_days": 21
+    },
+    {
+      "document_type": "Road Worthiness",
+      "expiry_date": "2026-03-10",
+      "reminder_start_days": 14
+    }
+  ]
+}
+
+###
+
+### ===============================
+### RENEW / UPDATE A DOCUMENT
+### ===============================
+PUT http://127.0.0.1:8000/vehicles/documents/1
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+"2027-02-28"
+
+
+@token = ""### ===============================
+### REGISTER USER
+### ===============================
+POST http://127.0.0.1:8000/auth/register
+Content-Type: application/json
+
+{
+  "name": "Admin User",
+  "email": "admin@test.com",
+  "password": "password123"
+}
+
+###
+
+### ===============================
+### LOGIN
+### ===============================
+POST http://127.0.0.1:8000/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@test.com",
+  "password": "password123"
+}
+
+###
+
+### ===============================
+### CREATE VEHICLE WITH DOCUMENTS
+### ===============================
+POST http://127.0.0.1:8000/vehicles
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "registration_number": "ABC-1234",
+  "type": "Car",
+  "owner": "John Doe",
+  "purchase_date": "2023-05-01",
+  "remark": "Company vehicle",
+  "documents": [
+    {
+      "document_type": "Insurance",
+      "expiry_date": "2026-02-28",
+      "reminder_start_days": 21
+    },
+    {
+      "document_type": "Road Worthiness",
+      "expiry_date": "2026-03-10",
+      "reminder_start_days": 14
+    }
+  ]
+}
+
+###
+
+### ===============================
+### RENEW / UPDATE A DOCUMENT
+### ===============================
+PUT http://127.0.0.1:8000/vehicles/documents/1
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+"2027-02-28"
