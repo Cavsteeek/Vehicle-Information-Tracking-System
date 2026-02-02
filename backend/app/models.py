@@ -15,6 +15,10 @@ class User(Base):
     name = Column(String, nullable=False)
     email = Column(String, unique=True, index=True)
     hashed_password = Column(String, nullable=False)
+    created_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now()
+    )
 
 # ===================== VEHICLES =====================
 
@@ -23,7 +27,7 @@ class Vehicle(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     registration_number = Column(String, unique=True, index=True)
-    type = Column(String)
+    vehicle_type = Column(String)
     owner = Column(String)
     purchase_date = Column(Date)
     remark = Column(String, nullable=True)
