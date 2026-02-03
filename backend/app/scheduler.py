@@ -59,7 +59,8 @@ def start_scheduler():
         scheduler.add_job(
             check_document_expiries,
             trigger="interval",
-            days=1,
+            # days=1,
+            seconds=10,
             id="document_expiry_job",
             replace_existing=True
         )
