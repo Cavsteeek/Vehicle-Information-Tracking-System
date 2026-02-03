@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from ..database import SessionLocal
 from ..models import Vehicle, VehicleDocument, AuditLog
-from ..schemas import VehicleCreate
+from ..schemas import DocumentRenewRequest, VehicleCreate
 from ..deps import get_current_user
 import json
 
@@ -14,6 +14,11 @@ def get_db():
         yield db
     finally:
         db.close()
+
+@router.get("/whoami")
+def whoami(current_user: str = Depends(get_current_user)):
+    return {"email": current_user}
+
 
 @router.post("/")
 def create_vehicle(
@@ -56,7 +61,7 @@ def create_vehicle(
 @router.put("/documents/{doc_id}")
 def update_document(
     doc_id: int,
-    expiry_date,
+    payload: DocumentRenewRequest,
     db: Session = Depends(get_db),
     user_email: str = Depends(get_current_user)
 ):
@@ -69,8 +74,8 @@ def update_document(
         "status": doc.status
     }
 
-    doc.expiry_date = expiry_date
-    doc.status = "RENEWED"
+    doc.expiry_date = payload.new_expiry_date
+    doc.status = "ACTIVE"
     doc.last_updated_by = user_email
 
     db.add(AuditLog(
@@ -79,7 +84,7 @@ def update_document(
         action="RENEW",
         performed_by=user_email,
         old_value=json.dumps(old_value),
-        new_value=json.dumps({"expiry_date": str(expiry_date)})
+        new_value=json.dumps({"expiry_date": str(payload.new_expiry_date)})
     ))
 
     db.commit()

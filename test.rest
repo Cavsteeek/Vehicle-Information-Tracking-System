@@ -1,5 +1,3 @@
-@token = ""
-
 ### ===============================
 ### REGISTER USER
 ### ===============================
@@ -21,35 +19,56 @@ POST http://127.0.0.1:8000/auth/login
 Content-Type: application/json
 
 {
-  "email": "admin@test.com",
-  "password": "password123"
+  "email": "chimdiebubeuzo@gmail.com",
+  "password": "uzo"
 }
 
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjaGltZGllYnViZXV6b0BnbWFpbC5jb20iLCJleHAiOjE3NzAxODk4NTN9.7KrBTRJ7-NetS_cLeFwSanzDNLEw0dHSC6eTtdvcIE0
+
 ###
+GET http://127.0.0.1:8000/vehicles/whoami
+Authorization: Bearer {{token}}
+
 
 ### ===============================
 ### CREATE VEHICLE WITH DOCUMENTS
 ### ===============================
-POST http://127.0.0.1:8000/vehicles
+POST http://127.0.0.1:8000/vehicles/
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
-  "registration_number": "ABC-1234",
-  "type": "Car",
-  "owner": "John Doe",
-  "purchase_date": "2023-05-01",
-  "remark": "Company vehicle",
+  "registration_number": "RUM106XB",
+  "type": "White Hilux",
+  "owner": "Jimcol",
+  "purchase_date": "2022-11-30",
+  "remark": "",
   "documents": [
     {
-      "document_type": "Insurance",
-      "expiry_date": "2026-02-28",
+      "document_type": "Vehicle License",
+      "expiry_date": "2026-12-05",
+      "reminder_start_days": 21
+    },
+    {
+      "document_type": "Vehicle Info",
+      "expiry_date": "2026-02-12"
+    },
+    {
+      "document_type": "Proof of Ownership",
+      "expiry_date": "2026-12-31",
       "reminder_start_days": 21
     },
     {
       "document_type": "Road Worthiness",
-      "expiry_date": "2026-03-10",
-      "reminder_start_days": 14
+      "expiry_date": "2026-12-05"
+    },
+    {
+      "document_type": "Hackney Carriage",
+      "expiry_date": "2026-12-05" 
+    },
+    {
+      "document_type": "Insurance (Genuine)",
+      "expiry_date": "2026-02-11" 
     }
   ]
 }
@@ -59,74 +78,11 @@ Content-Type: application/json
 ### ===============================
 ### RENEW / UPDATE A DOCUMENT
 ### ===============================
-PUT http://127.0.0.1:8000/vehicles/documents/1
-Authorization: Bearer {{token}}
-Content-Type: application/json
-
-"2027-02-28"
-
-
-@token = ""### ===============================
-### REGISTER USER
-### ===============================
-POST http://127.0.0.1:8000/auth/register
-Content-Type: application/json
-
-{
-  "name": "Admin User",
-  "email": "admin@test.com",
-  "password": "password123"
-}
-
-###
-
-### ===============================
-### LOGIN
-### ===============================
-POST http://127.0.0.1:8000/auth/login
-Content-Type: application/json
-
-{
-  "email": "admin@test.com",
-  "password": "password123"
-}
-
-###
-
-### ===============================
-### CREATE VEHICLE WITH DOCUMENTS
-### ===============================
-POST http://127.0.0.1:8000/vehicles
+PUT http://127.0.0.1:8000/vehicles/documents/6
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
-  "registration_number": "ABC-1234",
-  "type": "Car",
-  "owner": "John Doe",
-  "purchase_date": "2023-05-01",
-  "remark": "Company vehicle",
-  "documents": [
-    {
-      "document_type": "Insurance",
-      "expiry_date": "2026-02-28",
-      "reminder_start_days": 21
-    },
-    {
-      "document_type": "Road Worthiness",
-      "expiry_date": "2026-03-10",
-      "reminder_start_days": 14
-    }
-  ]
+    "new_expiry_date": "2026-12-11"
 }
 
-###
-
-### ===============================
-### RENEW / UPDATE A DOCUMENT
-### ===============================
-PUT http://127.0.0.1:8000/vehicles/documents/1
-Authorization: Bearer {{token}}
-Content-Type: application/json
-
-"2027-02-28"

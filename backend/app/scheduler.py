@@ -8,6 +8,8 @@ from .emailService import send_email
 scheduler = BackgroundScheduler()
 
 def check_document_expiries():
+    print("Scheduler running at", date.today())
+
     """
     Runs daily.
     Checks all vehicle documents.
@@ -26,9 +28,10 @@ def check_document_expiries():
             continue
 
         if days_left <= doc.reminder_start_days:
+            users = db.query(User).all()  # get all registered users
             subject = f"{doc.document_type} Expiry Reminder"
             body = f"""
-Hello,
+Hello {user.name},
 
 This is a reminder that a vehicle document is nearing expiry.
 
@@ -37,8 +40,6 @@ Expiry Date: {doc.expiry_date}
 Days Remaining: {days_left}
 
 Please ensure renewal before the expiry date.
-
-— Vehicle Monitoring System
 """
 
             # Send email to every registered user
@@ -51,5 +52,16 @@ Please ensure renewal before the expiry date.
 
     db.close()
 
-scheduler.add_job(check_document_expiries, "interval", days=1)
-scheduler.start()
+# scheduler.add_job(check_document_expiries, trigger="interval", days=1)
+scheduler.add_job(check_document_expiries, trigger="interval", seconds=10)
+def start_scheduler():
+    if not scheduler.running:
+        scheduler.add_job(
+            check_document_expiries,
+            trigger="interval",
+            days=1,
+            id="document_expiry_job",
+            replace_existing=True
+        )
+        scheduler.start()
+        print("✅ Scheduler started")

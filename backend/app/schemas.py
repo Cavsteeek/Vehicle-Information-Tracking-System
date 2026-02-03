@@ -9,6 +9,10 @@ class UserCreate(BaseModel):
     email: str
     password: str
 
+class UserLogin(BaseModel):
+    email: str
+    password: str
+
 
 class Token(BaseModel):
     access_token: str
@@ -53,6 +57,9 @@ class VehicleResponse(BaseModel):
 
     class Config:
         orm_mode = True
+        
+class DocumentRenewRequest(BaseModel):
+    new_expiry_date: date
 
 # ===================== AUDIT =====================
 
