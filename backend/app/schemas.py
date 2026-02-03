@@ -45,7 +45,7 @@ class VehicleDocumentResponse(BaseModel):
     last_updated_at: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class VehicleResponse(BaseModel):
@@ -56,7 +56,7 @@ class VehicleResponse(BaseModel):
     documents: List[VehicleDocumentResponse]
 
     class Config:
-        orm_mode = True
+        from_attributes = True
         
 class DocumentRenewRequest(BaseModel):
     new_expiry_date: date
@@ -74,4 +74,4 @@ class AuditLogResponse(BaseModel):
     new_value: Optional[str]
 
     class Config:
-        orm_mode = True
+        from_attributes = True

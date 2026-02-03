@@ -13,8 +13,7 @@ def send_email(to: str, subject: str, body: str):
     msg["To"] = to
     msg["Subject"] = subject
     msg.set_content(body)
-
-    with smtplib.SMTP(EMAIL_HOST, EMAIL_PORT) as server:
-        server.starttls()
+    
+    with smtplib.SMTP_SSL(EMAIL_HOST, EMAIL_PORT, timeout=10) as server:
         server.login(EMAIL_USER, EMAIL_PASS)
         server.send_message(msg)
