@@ -8,6 +8,23 @@ const props = defineProps({
     }
 })
 
+const documentOrder = [
+    "Vehicle License",
+    "Motor Vehicle Info Cert (CMRIS)",
+    "Proof of Ownership",
+    "Road Worthiness",
+    "Hackney Carriage",
+    "Carrier Permit",
+    "Insurance",
+    "Insurance (Genuine)"
+];
+
+const sortedDocuments = computed(() => {
+    return [...props.vehicle.documents].sort((a, b) => {
+        return documentOrder.indexOf(a.document_type) - documentOrder.indexOf(b.document_type);
+    });
+});
+
 // Color Logic: Returns a status object for a document
 const getStatus = (expiryDate, reminderDays) => {
     const today = new Date()
@@ -37,7 +54,7 @@ const emit = defineEmits(['renew'])
         </div>
 
         <div class="space-y-3 flex-grow">
-            <div v-for="doc in vehicle.documents" :key="doc.id"
+            <div v-for="doc in sortedDocuments" :key="doc.id"
                 class="flex items-center justify-between p-3 rounded-xl border transition hover:shadow-sm"
                 :class="getStatus(doc.expiry_date, 21).border">
                 <div>
@@ -62,7 +79,8 @@ const emit = defineEmits(['renew'])
             <div class="flex flex-col">
                 <span class="text-[11px] text-gray-400 font-bold uppercase tracking-wider">Owner</span>
                 <span class="text-sm text-gray-800 font-black">{{ vehicle.owner }}</span>
-                <span class="text-[10px] text-gray-400 font-medium mt-1">Purchased: {{ vehicle.purchase_date || 'N/A'
+                <span class="text-[10px] text-gray-400 font-medium mt-1">Purchase Date: {{ vehicle.purchase_date ||
+                    'N/A'
                     }}</span>
             </div>
 
