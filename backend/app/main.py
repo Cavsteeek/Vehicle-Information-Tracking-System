@@ -5,8 +5,6 @@ from .routers import auth_routes, vehicle_routes
 from . import scheduler  # starts background jobs
 from fastapi.middleware.cors import CORSMiddleware
 
-Base.metadata.create_all(bind=engine)
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)

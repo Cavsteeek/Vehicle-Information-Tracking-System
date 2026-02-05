@@ -1,25 +1,13 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../api/http'
 
 const router = useRouter()
 
-const lastUsedEmail = localStorage.getItem('last_used_email') || ''
 const email = ref('')
 const password = ref('')
 const error = ref('')
-
-// Only show suggestion if user has started typing and it matches the start of the last email
-const showSuggestion = computed(() => {
-    return email.value &&
-        lastUsedEmail.startsWith(email.value) &&
-        email.value !== lastUsedEmail
-})
-
-const fillSuggestion = () => {
-    email.value = lastUsedEmail
-}
 
 const handleLogin = async () => {
     if (!email.value || !password.value) return
@@ -29,7 +17,6 @@ const handleLogin = async () => {
             password: password.value,
         })
         localStorage.setItem('token', res.data.access_token)
-        localStorage.setItem('last_used_email', email.value)
         router.push('/dashboard')
     } catch (err) {
         error.value = 'Invalid email or password'
@@ -40,7 +27,7 @@ const handleLogin = async () => {
 <template>
     <div class="min-h-screen flex items-center justify-center bg-gray-100">
         <div class="w-96 p-8 bg-white shadow-xl rounded-2xl">
-            <h1 class="text-2xl font-bold mb-6 text-center text-gray-800">Vehicle Monitor</h1>
+            <h1 class="text-2xl font-bold mb-6 text-center text-gray-800">Login</h1>
             <p v-if="error" class="text-red-500 text-sm mb-4 text-center font-medium">{{ error }}</p>
 
             <form @submit.prevent="handleLogin" class="space-y-4">

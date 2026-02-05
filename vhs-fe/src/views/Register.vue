@@ -27,7 +27,7 @@ const handleRegister = async () => {
 <template>
     <div class="min-h-screen flex items-center justify-center bg-gray-100">
         <div class="w-96 p-8 bg-white shadow-xl rounded-2xl">
-            <h1 class="text-2xl font-bold mb-6 text-center text-gray-800">Join the Fleet</h1>
+            <h1 class="text-2xl font-bold mb-6 text-center text-gray-800">Register</h1>
             <p v-if="error" class="text-red-500 text-sm mb-4 text-center font-medium">{{ error }}</p>
 
             <div class="space-y-4">

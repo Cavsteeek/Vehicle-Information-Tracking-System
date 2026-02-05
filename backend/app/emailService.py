@@ -2,6 +2,8 @@ import smtplib
 import os
 from email.message import EmailMessage
 from dotenv import load_dotenv
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 load_dotenv()
 
@@ -17,13 +19,26 @@ EMAIL_PASS = os.getenv("EMAIL_PASS")
 # print("PASS SET:", EMAIL_PASS is not None)
 
 
-def send_email(to: str, subject: str, body: str):
-    msg = EmailMessage()
+# def send_email(to: str, subject: str, body: str):
+#     msg = EmailMessage()
+#     msg["From"] = EMAIL_USER
+#     msg["To"] = to
+#     msg["Subject"] = subject
+#     msg.set_content(body)
+         
+#     with smtplib.SMTP_SSL(EMAIL_HOST, EMAIL_PORT, timeout=10) as server:
+#         server.login(EMAIL_USER, EMAIL_PASS)
+#         server.send_message(msg)
+
+def send_email(to, subject, body):
+
+    msg = MIMEMultipart()
     msg["From"] = EMAIL_USER
     msg["To"] = to
     msg["Subject"] = subject
-    msg.set_content(body)
-         
+
+    msg.attach(MIMEText(body, "html"))
+
     with smtplib.SMTP_SSL(EMAIL_HOST, EMAIL_PORT, timeout=10) as server:
         server.login(EMAIL_USER, EMAIL_PASS)
-        server.send_message(msg)
+        server.sendmail(EMAIL_USER, to, msg.as_string())
