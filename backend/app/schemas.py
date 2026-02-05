@@ -40,7 +40,6 @@ class VehicleDocumentResponse(BaseModel):
     document_type: str
     expiry_date: date
     status: str
-    color: str
     last_updated_by: str
     last_updated_at: str
 

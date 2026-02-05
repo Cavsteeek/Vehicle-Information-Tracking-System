@@ -1,47 +1,65 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../api/http'
 
 const router = useRouter()
 
+const lastUsedEmail = localStorage.getItem('last_used_email') || ''
 const email = ref('')
 const password = ref('')
 const error = ref('')
 
-const login = async () => {
+// Only show suggestion if user has started typing and it matches the start of the last email
+const showSuggestion = computed(() => {
+    return email.value &&
+        lastUsedEmail.startsWith(email.value) &&
+        email.value !== lastUsedEmail
+})
+
+const fillSuggestion = () => {
+    email.value = lastUsedEmail
+}
+
+const handleLogin = async () => {
+    if (!email.value || !password.value) return
     try {
         const res = await api.post('/auth/login', {
             email: email.value,
             password: password.value,
         })
-
         localStorage.setItem('token', res.data.access_token)
+        localStorage.setItem('last_used_email', email.value)
         router.push('/dashboard')
     } catch (err) {
-        error.value = 'Invalid credentials'
+        error.value = 'Invalid email or password'
     }
 }
 </script>
 
 <template>
-    <div class="min-h-screen flex items-center justify-center">
-        <div class="w-96 p-6 border rounded">
-            <h1 class="text-2xl font-bold mb-4">Login</h1>
+    <div class="min-h-screen flex items-center justify-center bg-gray-100">
+        <div class="w-96 p-8 bg-white shadow-xl rounded-2xl">
+            <h1 class="text-2xl font-bold mb-6 text-center text-gray-800">Vehicle Monitor</h1>
+            <p v-if="error" class="text-red-500 text-sm mb-4 text-center font-medium">{{ error }}</p>
 
-            <p v-if="error" class="text-red-500 mb-2">{{ error }}</p>
+            <form @submit.prevent="handleLogin" class="space-y-4">
+                <input v-model="email" name="email" type="email" autocomplete="email" placeholder="Email"
+                    class="w-full border p-3 rounded-lg outline-none focus:ring-2 focus:ring-black transition" />
 
-            <input v-model="email" type="email" placeholder="Email" class="w-full border p-2 mb-3" />
+                <input v-model="password" name="password" type="password" autocomplete="current-password"
+                    placeholder="Password"
+                    class="w-full border p-3 rounded-lg outline-none focus:ring-2 focus:ring-black transition" />
 
-            <input v-model="password" type="password" placeholder="Password" class="w-full border p-2 mb-4" />
+                <button type="submit"
+                    class="w-full bg-black text-white p-3 rounded-lg font-bold hover:bg-gray-800 transition shadow-lg active:scale-95">
+                    Sign In
+                </button>
+            </form>
 
-            <button @click="login" class="w-full bg-black text-white p-2">
-                Login
-            </button>
-
-            <p class="mt-4 text-sm">
-                No account?
-                <router-link to="/register" class="underline">Sign up</router-link>
+            <p class="mt-6 text-center text-sm text-gray-600">
+                New here?
+                <router-link to="/register" class="text-black font-bold underline ml-1">Create an account</router-link>
             </p>
         </div>
     </div>

@@ -1,8 +1,9 @@
+from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from ..database import SessionLocal
 from ..models import Vehicle, VehicleDocument, AuditLog
-from ..schemas import DocumentRenewRequest, VehicleCreate
+from ..schemas import DocumentRenewRequest, VehicleCreate, VehicleResponse
 from ..deps import get_current_user
 import json
 
@@ -19,6 +20,14 @@ def get_db():
 def whoami(current_user: str = Depends(get_current_user)):
     return {"email": current_user}
 
+@router.get("/", response_model=List[VehicleResponse])
+def get_all_vehicles(
+    db: Session = Depends(get_db),
+    current_user: str = Depends(get_current_user)
+):
+    # Fetch all vehicles and their related documents
+    vehicles = db.query(Vehicle).all()
+    return vehicles
 
 @router.post("/")
 def create_vehicle(
