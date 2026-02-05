@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from datetime import date
+from datetime import date, datetime
 from typing import List, Optional
 
 # ===================== AUTH =====================
@@ -40,8 +40,8 @@ class VehicleDocumentResponse(BaseModel):
     document_type: str
     expiry_date: date
     status: str
-    last_updated_by: str
-    last_updated_at: str
+    last_updated_by: Optional[str] = None
+    last_updated_at: datetime
 
     class Config:
         from_attributes = True
@@ -50,7 +50,7 @@ class VehicleDocumentResponse(BaseModel):
 class VehicleResponse(BaseModel):
     id: int
     registration_number: str
-    type: str
+    vehicle_type: str
     owner: str
     documents: List[VehicleDocumentResponse]
 

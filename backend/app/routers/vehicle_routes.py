@@ -20,15 +20,44 @@ def get_db():
 def whoami(current_user: str = Depends(get_current_user)):
     return {"email": current_user}
 
+# Get all vehicles
 @router.get("/", response_model=List[VehicleResponse])
 def get_all_vehicles(
     db: Session = Depends(get_db),
     current_user: str = Depends(get_current_user)
 ):
-    # Fetch all vehicles and their related documents
+    """Fetch all vehicles and their associated documents."""
     vehicles = db.query(Vehicle).all()
     return vehicles
 
+# Get single vehicle
+@router.get("/{vehicle_id}", response_model=VehicleResponse)
+def get_vehicle(
+    vehicle_id: int,
+    db: Session = Depends(get_db),
+    current_user: str = Depends(get_current_user)
+):
+    vehicle = db.query(Vehicle).filter(Vehicle.id == vehicle_id).first()
+    if not vehicle:
+        raise HTTPException(status_code=404, detail="Vehicle not found")
+    return vehicle
+
+# delete Vehicle
+@router.delete("/{vehicle_id}")
+def delete_vehicle(
+    vehicle_id: int,
+    db: Session = Depends(get_db),
+    current_user: str = Depends(get_current_user)
+):
+    vehicle = db.query(Vehicle).filter(Vehicle.id == vehicle_id).first()
+    if not vehicle:
+        raise HTTPException(status_code=404, detail="Vehicle not found")
+    
+    db.delete(vehicle)
+    db.commit()
+    return {"message": f"Vehicle {vehicle_id} and its documents deleted successfully"}
+
+# Create new vehicle
 @router.post("/")
 def create_vehicle(
     vehicle: VehicleCreate,

@@ -17,7 +17,7 @@ const handleLogout = () => {
 <template>
     <div class="min-h-screen bg-gray-100">
         <nav class="bg-white shadow-sm px-8 py-4 flex justify-between items-center">
-            <h1 class="text-xl font-bold text-gray-800">Vehicle Monitor</h1>
+            <h1 class="text-xl font-bold text-gray-800">VPMS</h1>
 
             <button @click="handleLogout"
                 class="flex items-center gap-2 text-gray-600 hover:text-red-600 font-medium transition">
@@ -32,9 +32,8 @@ const handleLogout = () => {
 
         <main class="max-w-7xl mx-auto py-12 px-4">
             <div class="text-center mb-12">
-                <h1 class="text-4xl font-black text-gray-900 mb-4">Fleet Dashboard</h1>
                 <p class="text-gray-500 max-w-2xl mx-auto">
-                    Manage your vehicles and track document expirations in real-time.
+
                 </p>
             </div>
 
