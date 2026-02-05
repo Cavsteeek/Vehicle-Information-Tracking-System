@@ -7,7 +7,16 @@ from fastapi.middleware.cors import CORSMiddleware
 
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="Vehicle Monitoring API")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    Base.metadata.create_all(bind=engine)
+    scheduler.start_scheduler()
+    yield
+
+app = FastAPI(
+    title="Vehicle Monitoring API",
+    lifespan=lifespan
+)
 
 origins = [
     "http://localhost:5173",  # Your Vue dev server
@@ -20,17 +29,6 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],              # Allows OPTIONS, POST, GET, etc.
     allow_headers=["*"],              # Allows your Content-Type and Authorization headers
-)
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    Base.metadata.create_all(bind=engine)
-    scheduler.start_scheduler()
-    yield
-
-app = FastAPI(
-    title="Vehicle Monitoring API",
-    lifespan=lifespan
 )
 
 app.include_router(auth_routes.router)
