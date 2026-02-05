@@ -3,10 +3,24 @@ from fastapi import FastAPI
 from .database import engine, Base
 from .routers import auth_routes, vehicle_routes
 from . import scheduler  # starts background jobs
+from fastapi.middleware.cors import CORSMiddleware
 
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Vehicle Monitoring API")
+
+origins = [
+    "http://localhost:5173",  # Your Vue dev server
+    "http://127.0.0.1:5173",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,            # Allows your specific frontend
+    allow_credentials=True,
+    allow_methods=["*"],              # Allows OPTIONS, POST, GET, etc.
+    allow_headers=["*"],              # Allows your Content-Type and Authorization headers
+)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
