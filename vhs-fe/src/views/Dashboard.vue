@@ -3,6 +3,8 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../api/http'
 import VehicleCard from '../components/VehicleCard.vue'
+import AddVehicleModal from '../components/AddVehicleModal.vue'
+import UpdateExpiryModal from '../components/UpdateExpiryModal.vue'
 
 const router = useRouter()
 const vehicles = ref([])
@@ -36,6 +38,8 @@ const handleLogout = () => {
 }
 
 const showAddModal = ref(false)
+const showUpdateModal = ref(false)
+const selectedDoc = ref(null)
 
 const openAddModal = () => {
     showAddModal.value = true
@@ -46,7 +50,8 @@ const closeAddModal = () => {
 }
 
 const handleRenew = (doc) => {
-    console.log("Renewing document:", doc.id)
+    selectedDoc.value = doc
+    showUpdateModal.value = true
 }
 
 onMounted(fetchData)
@@ -117,4 +122,6 @@ onMounted(fetchData)
         </main>
     </div>
     <AddVehicleModal v-if="showAddModal" @close="closeAddModal" @refresh="fetchData" />
+    <UpdateExpiryModal v-if="showUpdateModal" :doc="selectedDoc" @close="showUpdateModal = false"
+        @refresh="fetchData" />
 </template>

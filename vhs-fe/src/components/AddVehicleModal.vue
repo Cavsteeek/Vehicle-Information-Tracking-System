@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, watch } from 'vue'
 import api from '../api/http'
 
 const emit = defineEmits(['close', 'refresh'])
@@ -7,18 +7,42 @@ const emit = defineEmits(['close', 'refresh'])
 const loading = ref(false)
 const error = ref('')
 
-// The form structure matching your Backend VehicleCreate schema
+// Local state for the preset selector (not sent to BE)
+const presetType = ref('Truck')
+
 const form = reactive({
     registration_number: '',
-    type: 'Truck', // Default
+    vehicle_type: '', // This is the "Vehicle Name" input
     owner: '',
     purchase_date: new Date().toISOString().split('T')[0],
     remark: '',
-    documents: [
-        { document_type: 'Insurance', expiry_date: '', reminder_start_days: 21 },
-        { document_type: 'Road Worthiness', expiry_date: '', reminder_start_days: 21 }
-    ]
+    documents: []
 })
+
+// Document Presets
+const truckDocs = [
+    'Vehicle License', 'Proof of Ownership', 'Road Worthiness',
+    'Hackney Carriage', 'Insurance (Genuine)', 'Carrier Permit', 'Motor Vehicle Info Cert (CMRIS)'
+]
+const carDocs = [
+    'Vehicle License', 'Proof of Ownership', 'Road Worthiness',
+    'Insurance (Genuine)', 'Motor Vehicle Info Cert (CMRIS)'
+]
+
+// Function to apply presets
+const applyPreset = (type) => {
+    const docList = type === 'Truck' || type === 'Bus' ? truckDocs : carDocs
+    form.documents = docList.map(name => ({
+        document_type: name,
+        expiry_date: '',
+        reminder_start_days: 21
+    }))
+}
+
+// Watch for preset changes to update the doc list automatically
+watch(presetType, (newType) => {
+    applyPreset(newType)
+}, { immediate: true })
 
 const addDocumentRow = () => {
     form.documents.push({ document_type: '', expiry_date: '', reminder_start_days: 21 })
@@ -32,6 +56,7 @@ const handleSubmit = async () => {
     loading.value = true
     error.value = ''
     try {
+        // We send 'form' as is. 'presetType' is ignored because it's not in the 'form' object.
         await api.post('/vehicles/', form)
         emit('refresh')
         emit('close')
@@ -64,6 +89,19 @@ const handleSubmit = async () => {
                 <p v-if="error" class="bg-red-50 text-red-600 p-3 rounded-lg mb-4 text-sm font-bold">{{ error }}</p>
 
                 <form @submit.prevent="handleSubmit" class="space-y-6">
+                    <div class="bg-gray-50 p-4 rounded-2xl border-2 border-dashed border-gray-200">
+                        <label class="text-[10px] font-black uppercase text-gray-400 block mb-2">Auto-fill Documents
+                            for:</label>
+                        <div class="flex gap-4">
+                            <label v-for="t in ['Truck', 'Car', 'Bus']" :key="t"
+                                class="flex items-center gap-2 cursor-pointer">
+                                <input type="radio" v-model="presetType" :value="t" class="accent-black" />
+                                <span class="text-sm font-bold"
+                                    :class="presetType === t ? 'text-black' : 'text-gray-400'">{{ t }}</span>
+                            </label>
+                        </div>
+                    </div>
+
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="space-y-1">
                             <label class="text-xs font-black uppercase text-gray-500 ml-1">Reg Number</label>
@@ -71,14 +109,9 @@ const handleSubmit = async () => {
                                 class="w-full border-2 border-gray-100 p-3 rounded-xl outline-none focus:border-black transition" />
                         </div>
                         <div class="space-y-1">
-                            <label class="text-xs font-black uppercase text-gray-500 ml-1">Vehicle Type</label>
-                            <select v-model="form.type"
-                                class="w-full border-2 border-gray-100 p-3 rounded-xl outline-none focus:border-black bg-white">
-                                <option>Truck</option>
-                                <option>Van</option>
-                                <option>Car</option>
-                                <option>Motorcycle</option>
-                            </select>
+                            <label class="text-xs font-black uppercase text-gray-500 ml-1">Vehicle Name/Model</label>
+                            <input v-model="form.vehicle_type" required placeholder="e.g. Mack Titan 2024"
+                                class="w-full border-2 border-gray-100 p-3 rounded-xl outline-none focus:border-black transition" />
                         </div>
                         <div class="space-y-1">
                             <label class="text-xs font-black uppercase text-gray-500 ml-1">Owner Name</label>
@@ -96,7 +129,7 @@ const handleSubmit = async () => {
                         <div class="flex justify-between items-center mb-3">
                             <label class="text-xs font-black uppercase text-gray-500 ml-1">Documents & Expiries</label>
                             <button type="button" @click="addDocumentRow"
-                                class="text-xs font-black text-blue-600 hover:underline">+ Add More</button>
+                                class="text-xs font-black text-blue-600 hover:underline">+ Add Custom</button>
                         </div>
                         <div class="space-y-3">
                             <div v-for="(doc, index) in form.documents" :key="index"
@@ -105,7 +138,7 @@ const handleSubmit = async () => {
                                     class="flex-1 bg-transparent border-b border-gray-300 outline-none focus:border-black py-1 text-sm font-bold" />
                                 <input v-model="doc.expiry_date" type="date" required
                                     class="bg-transparent border-b border-gray-300 outline-none focus:border-black py-1 text-sm font-bold" />
-                                <button v-if="form.documents.length > 1" type="button" @click="removeDocumentRow(index)"
+                                <button type="button" @click="removeDocumentRow(index)"
                                     class="text-red-400 hover:text-red-600">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20"
                                         fill="currentColor">

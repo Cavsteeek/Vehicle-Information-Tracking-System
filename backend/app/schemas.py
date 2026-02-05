@@ -52,6 +52,7 @@ class VehicleResponse(BaseModel):
     registration_number: str
     vehicle_type: str
     owner: str
+    purchase_date: date
     documents: List[VehicleDocumentResponse]
 
     class Config:

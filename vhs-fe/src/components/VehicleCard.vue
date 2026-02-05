@@ -59,8 +59,14 @@ const emit = defineEmits(['renew'])
         </div>
 
         <div class="mt-6 pt-4 border-t border-gray-50 flex justify-between items-center">
-            <span class="text-xs text-gray-400 font-medium">Owner: {{ vehicle.owner }}</span>
-            <button class="text-gray-300 hover:text-red-500 transition">
+            <div class="flex flex-col">
+                <span class="text-[11px] text-gray-400 font-bold uppercase tracking-wider">Owner</span>
+                <span class="text-sm text-gray-800 font-black">{{ vehicle.owner }}</span>
+                <span class="text-[10px] text-gray-400 font-medium mt-1">Purchased: {{ vehicle.purchase_date || 'N/A'
+                    }}</span>
+            </div>
+
+            <button class="text-gray-300 hover:text-red-500 transition self-end pb-1">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
                     stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
