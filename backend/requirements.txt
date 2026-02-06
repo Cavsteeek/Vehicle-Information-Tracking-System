@@ -7,3 +7,4 @@ apscheduler
 pydantic
 python-jose
 email-validator
+bcrypt
