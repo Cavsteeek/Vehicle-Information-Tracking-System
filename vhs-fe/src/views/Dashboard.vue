@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../api/http'
 import VehicleCard from '../components/VehicleCard.vue'
@@ -11,17 +11,35 @@ const router = useRouter()
 const vehicles = ref([])
 const userEmail = ref('')
 const loading = ref(true)
+
+// --- SEARCH & PAGINATION ---
 const searchQuery = ref('')
+const currentPage = ref(1)
+const itemsPerPage = 6
 
-// --- COMPUTED SEARCH LOGIC ---
-const filteredVehicles = computed(() => {
+watch(searchQuery, () => {
+    currentPage.value = 1
+})
+
+const allFilteredResults = computed(() => {
     if (!searchQuery.value) return vehicles.value
-
     const query = searchQuery.value.toLowerCase()
     return vehicles.value.filter(v =>
         v.registration_number.toLowerCase().includes(query) ||
         v.vehicle_type.toLowerCase().includes(query)
     )
+})
+
+const filteredVehicles = computed(() => {
+    return allFilteredResults.value.slice(0, currentPage.value * itemsPerPage)
+})
+
+const hasMore = computed(() => {
+    return filteredVehicles.value.length < allFilteredResults.value.length
+})
+
+const remainingCount = computed(() => {
+    return allFilteredResults.value.length - filteredVehicles.value.length
 })
 
 // --- DATA FETCHING ---
@@ -30,7 +48,6 @@ const fetchData = async () => {
         loading.value = true
         const userRes = await api.get('/vehicles/whoami')
         userEmail.value = userRes.data.email
-
         const vehicleRes = await api.get('/vehicles/')
         vehicles.value = vehicleRes.data
     } catch (err) {
@@ -89,9 +106,15 @@ onMounted(fetchData)
                 <div class="h-6 w-[1px] bg-gray-200"></div>
                 <span class="text-sm font-medium text-gray-500">{{ userEmail }}</span>
             </div>
+
             <button @click="handleLogout"
                 class="flex items-center gap-2 text-gray-600 hover:text-red-600 font-bold text-sm transition uppercase tracking-wider">
                 <span>Logout</span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
             </button>
         </nav>
 
@@ -104,7 +127,7 @@ onMounted(fetchData)
 
                 <div class="flex w-full md:w-auto gap-4">
                     <div class="relative flex-1 md:w-64">
-                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
                                 stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -112,11 +135,26 @@ onMounted(fetchData)
                             </svg>
                         </span>
                         <input v-model="searchQuery" type="text" placeholder="Search by plate or model..."
-                            class="w-full bg-white border-none shadow-sm pl-12 pr-4 py-3 rounded-xl focus:ring-2 focus:ring-black transition outline-none font-bold text-sm" />
+                            class="w-full bg-white border-none shadow-sm pl-12 pr-10 py-3 rounded-xl focus:ring-2 focus:ring-black transition outline-none font-bold text-sm" />
+
+                        <button v-if="searchQuery" @click="searchQuery = ''"
+                            class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 hover:text-black transition">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20"
+                                fill="currentColor">
+                                <path fill-rule="evenodd"
+                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                        </button>
                     </div>
 
                     <button @click="showAddModal = true"
-                        class="bg-black text-white px-6 py-3 rounded-xl font-bold hover:bg-gray-800 transition shadow-lg flex items-center gap-2 whitespace-nowrap">
+                        class="bg-black text-white px-6 py-3 rounded-xl font-bold hover:bg-gray-800 transition shadow-lg flex items-center gap-2 whitespace-nowrap active:scale-95">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd"
+                                d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+                                clip-rule="evenodd" />
+                        </svg>
                         Add Vehicle
                     </button>
                 </div>
@@ -126,23 +164,40 @@ onMounted(fetchData)
                 <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-black"></div>
             </div>
 
-            <div v-else-if="filteredVehicles.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <VehicleCard v-for="vehicle in filteredVehicles" :key="vehicle.id" :vehicle="vehicle"
-                    @renew="handleRenew" @delete="confirmDelete(vehicle)" />
+            <div v-else-if="filteredVehicles.length > 0">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <VehicleCard v-for="vehicle in filteredVehicles" :key="vehicle.id" :vehicle="vehicle"
+                        @renew="handleRenew" @delete="confirmDelete(vehicle)" />
+                </div>
+
+                <div v-if="hasMore" class="mt-12 flex justify-center">
+                    <button @click="currentPage++"
+                        class="group bg-white text-black px-8 py-3 rounded-xl font-black shadow-sm border border-gray-200 hover:bg-gray-50 transition active:scale-95 flex items-center gap-3">
+                        <span>Show More</span>
+                        <span
+                            class="bg-gray-100 text-gray-500 text-[10px] px-2 py-1 rounded-md group-hover:bg-black group-hover:text-white transition">
+                            {{ remainingCount }}
+                        </span>
+                    </button>
+                </div>
             </div>
 
             <div v-else class="bg-white rounded-3xl p-20 text-center shadow-sm border-2 border-dashed border-gray-200">
                 <h3 class="text-xl font-bold text-gray-800">
-                    {{ searchQuery ? 'No matches found' : 'No vehicles tracked yet' }}
+                    {{ searchQuery ? `No matches found` : `No vehicles tracked yet` }}
                 </h3>
                 <p class="text-gray-500 mb-8">
-                    {{ searchQuery ? `Try a different plate number or vehicle name.` : `Start by adding your first
-                    vehicle to the monitor.` }}
+                    {{ searchQuery
+                        ? `Try a different plate number or vehicle name.`
+                        : `Start by adding your first vehicle to the monitor.`
+                    }}
                 </p>
-                <button v-if="searchQuery" @click="searchQuery = ''" class="text-black font-black underline">Clear
-                    Search</button>
-                <button v-else @click="showAddModal = true" class="text-black font-black underline">Register
-                    Vehicle</button>
+                <button v-if="searchQuery" @click="searchQuery = ''" class="text-black font-black underline">
+                    Clear Search
+                </button>
+                <button v-else @click="showAddModal = true" class="text-black font-black underline">
+                    Register Vehicle
+                </button>
             </div>
         </main>
     </div>
