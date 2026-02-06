@@ -7,12 +7,11 @@ const emit = defineEmits(['close', 'refresh'])
 const loading = ref(false)
 const error = ref('')
 
-// Local state for the preset selector (not sent to BE)
 const presetType = ref('Truck')
 
 const form = reactive({
     registration_number: '',
-    type: '', // This is the "Vehicle Name" input
+    type: '',
     owner: '',
     purchase_date: new Date().toISOString().split('T')[0],
     remark: '',
@@ -56,12 +55,17 @@ const handleSubmit = async () => {
     loading.value = true
     error.value = ''
     try {
-        // We send 'form' as is. 'presetType' is ignored because it's not in the 'form' object.
-        await api.post('/vehicles/', form)
+        const payload = {
+            ...form,
+            purchase_date: form.purchase_date ? form.purchase_date : null
+        };
+
+        await api.post('/vehicles/', payload)
         emit('refresh')
         emit('close')
     } catch (err) {
-        error.value = err.response?.data?.detail || "Failed to create vehicle"
+        const detail = err.response?.data?.detail
+        error.value = Array.isArray(detail) ? detail[0].msg : detail || "Error"
     } finally {
         loading.value = false
     }
@@ -90,10 +94,10 @@ const handleSubmit = async () => {
 
                 <form @submit.prevent="handleSubmit" class="space-y-6">
                     <div class="bg-gray-50 p-4 rounded-2xl border-2 border-dashed border-gray-200">
-                        <label class="text-[10px] font-black uppercase text-gray-400 block mb-2">Auto-fill Documents
+                        <label class="text-[10px] font-black uppercase text-gray-400 block mb-2">Documents Template
                             for:</label>
                         <div class="flex gap-4">
-                            <label v-for="t in ['Truck', 'Car', 'Bus']" :key="t"
+                            <label v-for="t in ['Truck/Bus', 'Car']" :key="t"
                                 class="flex items-center gap-2 cursor-pointer">
                                 <input type="radio" v-model="presetType" :value="t" class="accent-black" />
                                 <span class="text-sm font-bold"

@@ -29,7 +29,7 @@ class Vehicle(Base):
     registration_number = Column(String, unique=True, index=True)
     vehicle_type = Column(String)
     owner = Column(String)
-    purchase_date = Column(Date)
+    purchase_date = Column(Date, nullable=True)
     remark = Column(String, nullable=True)
 
     # One vehicle → many documents

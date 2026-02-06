@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from datetime import date, datetime
 from typing import List, Optional
 
@@ -30,7 +30,7 @@ class VehicleCreate(BaseModel):
     registration_number: str
     type: str
     owner: str
-    purchase_date: date
+    purchase_date: Optional[date] = None
     remark: Optional[str] = None
     documents: List[VehicleDocumentCreate]
 
@@ -52,9 +52,9 @@ class VehicleResponse(BaseModel):
     registration_number: str
     vehicle_type: str
     owner: str
-    purchase_date: date
+    purchase_date: Optional[date] = None
     documents: List[VehicleDocumentResponse]
-
+      
     class Config:
         from_attributes = True
         
@@ -75,3 +75,4 @@ class AuditLogResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
