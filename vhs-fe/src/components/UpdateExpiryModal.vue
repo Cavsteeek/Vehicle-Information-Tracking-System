@@ -38,7 +38,7 @@ const handleUpdate = async () => {
             <div class="space-y-4">
                 <div class="space-y-1">
                     <label class="text-[10px] font-black uppercase text-gray-400 ml-1">New Expiry Date</label>
-                    <input v-model="newDate" type="date"
+                    <input v-model="newDate" type="date" @keyup.enter="handleUpdate"
                         class="w-full border-2 border-gray-100 p-3 rounded-xl outline-none focus:border-black transition font-bold" />
                 </div>
 
