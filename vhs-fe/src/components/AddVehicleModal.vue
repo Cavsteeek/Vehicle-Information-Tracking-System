@@ -97,7 +97,7 @@ const handleSubmit = async () => {
                         <label class="text-[10px] font-black uppercase text-gray-400 block mb-2">Documents Template
                             for:</label>
                         <div class="flex gap-4">
-                            <label v-for="t in ['Truck/Bus', 'Car']" :key="t"
+                            <label v-for="t in ['Truck', 'Car', 'Bus']" :key="t"
                                 class="flex items-center gap-2 cursor-pointer">
                                 <input type="radio" v-model="presetType" :value="t" class="accent-black" />
                                 <span class="text-sm font-bold"
