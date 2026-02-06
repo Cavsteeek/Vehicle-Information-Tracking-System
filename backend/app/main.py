@@ -17,16 +17,17 @@ app = FastAPI(
 )
 
 origins = [
-    "http://localhost:5173",  # Your Vue dev server
+    "http://localhost:5173",  # Vue dev server
     "http://127.0.0.1:5173",
+    "https://vpms.onrender.com"  # deployed frontend
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,            # Allows your specific frontend
+    allow_origins=origins,            # Allows frontend
     allow_credentials=True,
     allow_methods=["*"],              # Allows OPTIONS, POST, GET, etc.
-    allow_headers=["*"],              # Allows your Content-Type and Authorization headers
+    allow_headers=["*"],              # Allows Content-Type and Authorization headers
 )
 
 app.include_router(auth_routes.router)
