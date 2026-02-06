@@ -1,5 +1,8 @@
+from datetime import date
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+
+from app.email_notif import send_consolidated_alerts
 from ..database import SessionLocal
 from ..models import User
 from ..schemas import UserCreate, Token, UserLogin
@@ -28,6 +31,13 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
 
     db.add(new_user)
     db.commit()
+    db.refresh(new_user) # Important to get the user ID back
+
+    # DRY CALL: Send to just this new user, but DON'T update the notified flag
+    # This ensures they get the email now, but everyone still gets the daily one tomorrow.
+    send_consolidated_alerts(db, [new_user], date.today(), update_notified_flag=False)
+
+    return {"message": "User registered successfully and initial alert sent"}
 
     return {"message": "User registered successfully"}
 

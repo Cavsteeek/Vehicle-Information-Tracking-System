@@ -84,7 +84,7 @@ const emit = defineEmits(['renew'])
                     }}</span>
             </div>
 
-            <button class="text-gray-300 hover:text-red-500 transition self-end pb-1">
+            <button @click="$emit('delete')" class="text-gray-300 hover:text-red-500 transition self-end pb-1">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
                     stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"

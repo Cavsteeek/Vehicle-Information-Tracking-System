@@ -12,7 +12,7 @@ const presetType = ref('Truck')
 
 const form = reactive({
     registration_number: '',
-    vehicle_type: '', // This is the "Vehicle Name" input
+    type: '', // This is the "Vehicle Name" input
     owner: '',
     purchase_date: new Date().toISOString().split('T')[0],
     remark: '',
@@ -21,12 +21,12 @@ const form = reactive({
 
 // Document Presets
 const truckDocs = [
-    'Vehicle License', 'Proof of Ownership', 'Road Worthiness',
-    'Hackney Carriage', 'Insurance (Genuine)', 'Carrier Permit', 'Motor Vehicle Info Cert (CMRIS)'
+    'Vehicle License', 'Motor Vehicle Info Cert (CMRIS)', 'Proof of Ownership', 'Road Worthiness',
+    'Hackney Carriage', 'Carrier Permit', 'Insurance (Genuine)'
 ]
 const carDocs = [
-    'Vehicle License', 'Proof of Ownership', 'Road Worthiness',
-    'Insurance (Genuine)', 'Motor Vehicle Info Cert (CMRIS)'
+    'Vehicle License', 'Motor Vehicle Info Cert (CMRIS)', 'Proof of Ownership', 'Road Worthiness',
+    'Insurance (Genuine)',
 ]
 
 // Function to apply presets
@@ -110,7 +110,7 @@ const handleSubmit = async () => {
                         </div>
                         <div class="space-y-1">
                             <label class="text-xs font-black uppercase text-gray-500 ml-1">Vehicle Name/Model</label>
-                            <input v-model="form.vehicle_type" required placeholder="e.g. Mack Titan 2024"
+                            <input v-model="form.type" required placeholder="e.g. Mack Titan 2024"
                                 class="w-full border-2 border-gray-100 p-3 rounded-xl outline-none focus:border-black transition" />
                         </div>
                         <div class="space-y-1">

@@ -5,6 +5,7 @@ import api from '../api/http'
 import VehicleCard from '../components/VehicleCard.vue'
 import AddVehicleModal from '../components/AddVehicleModal.vue'
 import UpdateExpiryModal from '../components/UpdateExpiryModal.vue'
+import DeleteConfirmModal from '../components/DeleteConfirmModal.vue'
 
 const router = useRouter()
 const vehicles = ref([])
@@ -40,6 +41,30 @@ const handleLogout = () => {
 const showAddModal = ref(false)
 const showUpdateModal = ref(false)
 const selectedDoc = ref(null)
+const showDeleteModal = ref(false)
+const vehicleToDelete = ref(null)
+const deleteLoading = ref(false)
+
+const confirmDelete = (vehicle) => {
+    vehicleToDelete.value = vehicle
+    showDeleteModal.value = true
+}
+
+const handleDelete = async () => {
+    if (!vehicleToDelete.value) return
+
+    deleteLoading.value = true
+    try {
+        await api.delete(`/vehicles/${vehicleToDelete.value.id}`)
+        await fetchData() // Refresh the list
+        showDeleteModal.value = false
+    } catch (err) {
+        alert("Failed to delete vehicle")
+    } finally {
+        deleteLoading.value = false
+        vehicleToDelete.value = null
+    }
+}
 
 const openAddModal = () => {
     showAddModal.value = true
@@ -100,7 +125,8 @@ onMounted(fetchData)
             </div>
 
             <div v-else-if="vehicles.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <VehicleCard v-for="vehicle in vehicles" :key="vehicle.id" :vehicle="vehicle" @renew="handleRenew" />
+                <VehicleCard v-for="vehicle in vehicles" :key="vehicle.id" :vehicle="vehicle" @renew="handleRenew"
+                    @delete="confirmDelete(vehicle)" />
             </div>
 
             <div v-else class="bg-white rounded-3xl p-20 text-center shadow-sm border-2 border-dashed border-gray-200">
@@ -124,4 +150,6 @@ onMounted(fetchData)
     <AddVehicleModal v-if="showAddModal" @close="closeAddModal" @refresh="fetchData" />
     <UpdateExpiryModal v-if="showUpdateModal" :doc="selectedDoc" @close="showUpdateModal = false"
         @refresh="fetchData" />
+    <DeleteConfirmModal v-if="showDeleteModal" :vehicleNumber="vehicleToDelete?.registration_number"
+        :loading="deleteLoading" @close="showDeleteModal = false" @confirm="handleDelete" />
 </template>
