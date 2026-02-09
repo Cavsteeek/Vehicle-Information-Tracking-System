@@ -9,7 +9,7 @@ from .email_notif import send_consolidated_alerts
 scheduler = BackgroundScheduler()
 
 def check_document_expiries():
-    print("Scheduler running at", date.today())
+    print("Scheduler running at", {datetime.now()})
     db: Session = SessionLocal()
     try:
         users = db.query(User).all()
@@ -29,7 +29,7 @@ def start_scheduler():
             # seconds=10,  # seconds for testing
             id="document_expiry_job",
             replace_existing=True,
-            max_instances=1,
+            # max_instances=1,
             next_run_time=datetime.now()  # Start immediately for testing
         )
         scheduler.start()

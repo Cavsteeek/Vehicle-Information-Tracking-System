@@ -39,6 +39,11 @@ def send_email(to, subject, body):
 
     msg.attach(MIMEText(body, "html"))
 
-    with smtplib.SMTP_SSL(EMAIL_HOST, EMAIL_PORT, timeout=10) as server:
-        server.login(EMAIL_USER, EMAIL_PASS)
-        server.sendmail(EMAIL_USER, to, msg.as_string())
+    try:
+        with smtplib.SMTP_SSL(EMAIL_HOST, EMAIL_PORT, timeout=15) as server:
+            server.login(EMAIL_USER, EMAIL_PASS)
+            server.sendmail(EMAIL_USER, to, msg.as_string())
+        print(f"DEBUG: Email successfully sent to {to}")
+    except Exception as e:
+        print(f"ERROR in emailService: {e}")
+        raise e
