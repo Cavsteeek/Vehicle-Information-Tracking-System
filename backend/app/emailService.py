@@ -37,7 +37,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from dotenv import load_dotenv
 
-load_dotenv()
+# load_dotenv() // for local testing
 
 # Use .get() with defaults to prevent crashes
 EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
@@ -57,6 +57,7 @@ def send_email(to, subject, body):
     try:
         # Use SMTP + starttls (Standard for Port 587)
         server = smtplib.SMTP(EMAIL_HOST, EMAIL_PORT, timeout=15)
+        server.set_debuglevel(1)
         server.starttls() # Secure the connection
         server.login(EMAIL_USER, EMAIL_PASS)
         server.sendmail(EMAIL_USER, to, msg.as_string())

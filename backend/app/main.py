@@ -31,9 +31,9 @@ app.add_middleware(
     allow_headers=["*"],              # Allows Content-Type and Authorization headers
 )
 
-@app.get("/")
+@app.api_route("/", methods=["GET", "HEAD"])
 def health_check():
-    return {"status": "Backend is running", "timestamp": datetime.now()}
+    return {"status": "Live"}
 
 app.include_router(auth_routes.router)
 app.include_router(vehicle_routes.router)
