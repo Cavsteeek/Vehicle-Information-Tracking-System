@@ -35,5 +35,11 @@ app.add_middleware(
 def health_check():
     return {"status": "Live"}
 
+@app.get("/force-email")
+def force_email():
+    from .email_notif import check_document_expiries
+    check_document_expiries()
+    return {"message": "Scheduler task triggered manually"}
+
 app.include_router(auth_routes.router)
 app.include_router(vehicle_routes.router)

@@ -56,9 +56,11 @@ def send_email(to, subject, body):
 
     try:
         # Use SMTP + starttls (Standard for Port 587)
-        server = smtplib.SMTP(EMAIL_HOST, EMAIL_PORT, timeout=15)
+        server = smtplib.SMTP(EMAIL_HOST, EMAIL_PORT, timeout=50)
+        server.ehlo() # Identify ourselves to the server
         server.set_debuglevel(1)
         server.starttls() # Secure the connection
+        server.ehlo() # Re-identify after starting TLS
         server.login(EMAIL_USER, EMAIL_PASS)
         server.sendmail(EMAIL_USER, to, msg.as_string())
         server.quit()
