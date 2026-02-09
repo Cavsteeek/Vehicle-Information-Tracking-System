@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+import datetime
 from fastapi import FastAPI
 from .database import engine, Base
 from .routers import auth_routes, vehicle_routes
@@ -29,6 +30,10 @@ app.add_middleware(
     allow_methods=["*"],              # Allows OPTIONS, POST, GET, etc.
     allow_headers=["*"],              # Allows Content-Type and Authorization headers
 )
+
+@app.get("/")
+def health_check():
+    return {"status": "Backend is running", "timestamp": datetime.now()}
 
 app.include_router(auth_routes.router)
 app.include_router(vehicle_routes.router)
