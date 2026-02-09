@@ -1,5 +1,5 @@
 from contextlib import asynccontextmanager
-import datetime
+from datetime import datetime
 from fastapi import FastAPI
 from .database import engine, Base
 from .routers import auth_routes, vehicle_routes
