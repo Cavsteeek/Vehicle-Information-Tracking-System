@@ -9,16 +9,21 @@ def send_consolidated_alerts(db: Session, users: list, today: date, update_notif
     """
     # 1. Fetch all documents
     documents = db.query(VehicleDocument).all()
+    print(f"DEBUG: Found {len(documents)} total documents in DB")
     
     # Identify expiring docs
     expiring_items = []
     for doc in documents:
         days_left = (doc.expiry_date - today).days
+        print(f"DEBUG: Doc {doc.id} | Days Left: {days_left} | Last Notified: {doc.last_notified_at}")
+        
         if 0 <= days_left <= doc.reminder_start_days:
             # If update_notified_flag is True, check if already notified
             if not update_notified_flag or doc.last_notified_at != today:
                 expiring_items.append({"doc": doc, "days": days_left})
 
+    print(f"DEBUG: Total items to email: {len(expiring_items)}")
+    
     if not expiring_items:
         return
 
