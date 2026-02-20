@@ -19,7 +19,7 @@ with temp_engine.connect() as conn:
     conn.commit()
 temp_engine.dispose()
 
-engine = create_engine(DATABASE_URL, 
+engine = create_engine(DATABASE_URL, pool_pre_ping=True,
                        connect_args={"options": "-csearch_path=vehicle_monitor"}
                        )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
