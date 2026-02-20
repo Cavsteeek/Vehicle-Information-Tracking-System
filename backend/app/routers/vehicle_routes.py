@@ -6,6 +6,9 @@ from ..models import Vehicle, VehicleDocument, AuditLog
 from ..schemas import DocumentRenewRequest, VehicleCreate, VehicleResponse
 from ..deps import get_current_user
 import json
+from datetime import date
+from app.email_notif import send_consolidated_alerts
+
 
 router = APIRouter(prefix="/vehicles", tags=["Vehicles"])
 
@@ -74,8 +77,12 @@ def create_vehicle(
 
     db.add(db_vehicle)
     db.flush()  # get vehicle.id
-
+    
+    has_urgent_doc = False
     for doc in vehicle.documents:
+        days_left = (doc.expiry_date - date.today()).days
+        if days_left <= doc.reminder_start_days:
+            has_urgent_doc = True
         db_doc = VehicleDocument(
             vehicle_id=db_vehicle.id,
             document_type=doc.document_type,
@@ -94,6 +101,18 @@ def create_vehicle(
     ))
 
     db.commit()
+    if has_urgent_doc:
+        try:
+            # Fetch only approved users from DB
+            from .auth_routes import APPROVED_USERS # Adjust path if needed
+            approved_users = db.query(User).filter(User.email.in_(APPROVED_USERS)).all()
+            
+            if approved_users:
+                print(f"DEBUG: Triggering instant alert for new urgent vehicle.")
+                send_consolidated_alerts(db, approved_users, date.today(), update_notified_flag=False)
+        except Exception as e:
+            print(f"DEBUG: Instant notification failed: {e}")
+    
     return {"message": "Vehicle created"}
 
 @router.put("/documents/{doc_id}")
