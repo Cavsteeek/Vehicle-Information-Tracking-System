@@ -40,22 +40,26 @@ const handleLogin = async () => {
     <div class="min-h-screen flex items-center justify-center bg-gray-100">
         <div class="w-96 p-8 bg-white shadow-xl rounded-2xl">
             <h1 class="text-2xl font-bold mb-6 text-center text-gray-800">Login</h1>
-            <p v-if="error" class="text-red-500 text-sm mb-4 text-center font-medium">{{ error }}</p>
+
+            <p v-if="error"
+                class="text-red-500 text-sm mb-4 text-center font-medium bg-red-50 p-2 rounded border border-red-200">
+                {{ error }}
+            </p>
 
             <form @submit.prevent="handleLogin" class="space-y-4">
                 <input v-model="email" name="email" type="email" autocomplete="email" placeholder="Email"
                     :disabled="loading"
-                    class="w-full border p-3 rounded-lg outline-none focus:ring-2 focus:ring-black transition disabled:bg-gray-50" />
+                    class="w-full border p-3 rounded-lg outline-none focus:ring-2 focus:ring-black transition disabled:bg-gray-50 disabled:cursor-not-allowed" />
 
                 <input v-model="password" name="password" type="password" autocomplete="current-password"
                     placeholder="Password" :disabled="loading"
-                    class="w-full border p-3 rounded-lg outline-none focus:ring-2 focus:ring-black transition disabled:bg-gray-50" />
+                    class="w-full border p-3 rounded-lg outline-none focus:ring-2 focus:ring-black transition disabled:bg-gray-50 disabled:cursor-not-allowed" />
 
                 <button type="submit" :disabled="loading"
-                    class="w-full bg-black text-white p-3 rounded-lg font-bold hover:bg-gray-800 transition shadow-lg active:scale-95  disabled:bg-gray-400">
+                    class="w-full bg-black text-white p-3 rounded-lg font-bold hover:bg-gray-800 transition shadow-lg active:scale-95 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center">
 
-                    <svg v-if="loading" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <svg v-if="loading" class="animate-spin h-5 w-5 text-white mr-2" xmlns="http://www.w3.org/2000/svg"
+                        fill="none" viewBox="0 0 24 24">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
                         </circle>
                         <path class="opacity-75" fill="currentColor"
@@ -63,7 +67,7 @@ const handleLogin = async () => {
                         </path>
                     </svg>
 
-                    {{ loading ? 'Signing in...' : 'Sign In' }}
+                    <span>{{ loading ? 'Signing in...' : 'Sign In' }}</span>
 
                 </button>
             </form>
