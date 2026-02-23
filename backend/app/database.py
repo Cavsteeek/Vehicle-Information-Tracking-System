@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, text
+from sqlalchemy import NullPool, create_engine, text
 from sqlalchemy.orm import sessionmaker, declarative_base
 import os
 from dotenv import load_dotenv
@@ -12,15 +12,17 @@ if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
     
 
-temp_engine = create_engine(DATABASE_URL)
+temp_engine = create_engine(DATABASE_URL, poolclass=NullPool, connect_args={"sslmode": "require"})
 with temp_engine.connect() as conn:
     # This creates the schema ONLY if it doesn't exist
     conn.execute(text("CREATE SCHEMA IF NOT EXISTS vehicle_monitor"))
     conn.commit()
 temp_engine.dispose()
 
-engine = create_engine(DATABASE_URL, pool_pre_ping=True,
-                       connect_args={"options": "-csearch_path=vehicle_monitor"}
+engine = create_engine(DATABASE_URL, 
+                       pool_pre_ping=True, 
+                       poolclass=NullPool,
+                       connect_args={"sslmode": "require", "options": "-csearch_path=vehicle_monitor"}
                        )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
