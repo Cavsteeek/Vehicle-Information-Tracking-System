@@ -8,9 +8,14 @@ const name = ref('')
 const email = ref('')
 const password = ref('')
 const error = ref('')
+const loading = ref(false) // Spinner state
 
 const handleRegister = async () => {
     if (!name.value || !email.value || !password.value) return
+
+    error.value = ''
+    loading.value = true // Start spinner
+
     try {
         await api.post('/auth/register', {
             name: name.value,
@@ -19,7 +24,14 @@ const handleRegister = async () => {
         })
         router.push('/login')
     } catch (err) {
-        error.value = 'Email already registered'
+        // Reflect correct backend error message
+        if (err.response && err.response.data && err.response.data.detail) {
+            error.value = err.response.data.detail
+        } else {
+            error.value = 'Email already registered or connection failed'
+        }
+    } finally {
+        loading.value = false // Stop spinner
     }
 }
 </script>
@@ -30,21 +42,31 @@ const handleRegister = async () => {
             <h1 class="text-2xl font-bold mb-6 text-center text-gray-800">Register</h1>
             <p v-if="error" class="text-red-500 text-sm mb-4 text-center font-medium">{{ error }}</p>
 
-            <div class="space-y-4">
-                <input v-model="name" @keyup.enter="handleRegister" type="text" placeholder="Full Name"
-                    class="w-full border p-3 rounded-lg outline-none focus:ring-2 focus:ring-black transition" />
+            <form @submit.prevent="handleRegister" class="space-y-4">
+                <input v-model="name" type="text" placeholder="Full Name" :disabled="loading"
+                    class="w-full border p-3 rounded-lg outline-none focus:ring-2 focus:ring-black transition disabled:bg-gray-50" />
 
-                <input v-model="email" @keyup.enter="handleRegister" type="email" placeholder="Email Address"
-                    class="w-full border p-3 rounded-lg outline-none focus:ring-2 focus:ring-black transition" />
+                <input v-model="email" type="email" placeholder="Email Address" :disabled="loading"
+                    class="w-full border p-3 rounded-lg outline-none focus:ring-2 focus:ring-black transition disabled:bg-gray-50" />
 
-                <input v-model="password" @keyup.enter="handleRegister" type="password" placeholder="Password"
-                    class="w-full border p-3 rounded-lg outline-none focus:ring-2 focus:ring-black transition" />
+                <input v-model="password" type="password" placeholder="Password" :disabled="loading"
+                    class="w-full border p-3 rounded-lg outline-none focus:ring-2 focus:ring-black transition disabled:bg-gray-50" />
 
-                <button @click="handleRegister"
-                    class="w-full bg-black text-white p-3 rounded-lg font-bold hover:bg-gray-800 transition shadow-lg active:scale-95">
-                    Create Account
+                <button type="submit" :disabled="loading"
+                    class="w-full bg-black text-white p-3 rounded-lg font-bold hover:bg-gray-800 transition shadow-lg active:scale-95 disabled:bg-gray-400 flex items-center justify-center">
+
+                    <svg v-if="loading" class="animate-spin h-5 w-5 text-white mr-2" xmlns="http://www.w3.org/2000/svg"
+                        fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                        </circle>
+                        <path class="opacity-75" fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                        </path>
+                    </svg>
+
+                    <span>{{ loading ? 'Creating account...' : 'Create Account' }}</span>
                 </button>
-            </div>
+            </form>
 
             <p class="mt-6 text-center text-sm text-gray-600">
                 Already have an account?
