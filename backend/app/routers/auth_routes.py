@@ -8,8 +8,7 @@ from ..schemas import UserCreate, Token, UserLogin
 from ..auth import hash_password, verify_password, create_access_token
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
-raw_list = os.getenv("APPROVED_USERS", "chimdiebubeuzo@gmail.com")
-APPROVED_USERS = [email.strip() for email in raw_list.split(",")]
+
 
 def get_db():
     db = SessionLocal()
@@ -69,6 +68,9 @@ def login(user: UserLogin, db: Session = Depends(get_db)):
 
     if not db_user or not verify_password(user.password, db_user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    raw_list = os.getenv("APPROVED_USERS", "chimdiebubeuzo@gmail.com")
+    APPROVED_USERS = [email.strip() for email in raw_list.split(",")]
     
     if db_user.email not in APPROVED_USERS:
         raise HTTPException(status_code=403, detail="Account pending admin approval. Please contact chimdiebubeuzo@gmail.com")
