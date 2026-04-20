@@ -27,3 +27,36 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid authentication token"
         )
+
+
+def get_current_role(token: str = Depends(oauth2_scheme)):
+    try:
+        payload = decode_token(token)
+        role: str = payload.get("role")
+
+        if not role:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Role is missing in token"
+            )
+
+        return role
+
+    except JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication token"
+        )
+
+
+def require_roles(*allowed_roles):
+    def role_checker(role: str = Depends(get_current_role)):
+        if role not in allowed_roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Insufficient permissions"
+            )
+        return role
+
+    return role_checker
+

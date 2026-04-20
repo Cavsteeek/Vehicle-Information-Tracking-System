@@ -6,24 +6,23 @@ from dotenv import load_dotenv
 load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL")
-
-# Render uses 'postgres://', but SQLAlchemy requires 'postgresql://'
-if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
-    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
     
+if not DATABASE_URL:
+    raise ValueError("DATABASE_URL environment variable is not set. Copy .env.example to .env and fill in your database URL.")
 
-temp_engine = create_engine(DATABASE_URL, poolclass=NullPool, connect_args={"sslmode": "require"})
-with temp_engine.connect() as conn:
-    # This creates the schema ONLY if it doesn't exist
-    conn.execute(text("CREATE SCHEMA IF NOT EXISTS vehicle_monitor"))
-    conn.commit()
-temp_engine.dispose()
-
-engine = create_engine(DATABASE_URL, 
-                       pool_pre_ping=True, 
-                       poolclass=NullPool,
-                       connect_args={"sslmode": "require", "options": "-csearch_path=vehicle_monitor"}
-                       )
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
+engine = create_engine(
+    DATABASE_URL,
+    echo=False,
+    pool_pre_ping=True,
+    pool_recycle=300
+)
+SessionLocal = sessionmaker(bind=engine, expire_on_commit=False)
 Base = declarative_base()
+
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()

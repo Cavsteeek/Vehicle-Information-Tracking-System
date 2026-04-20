@@ -22,7 +22,15 @@ const handleLogin = async () => {
             password: password.value,
         })
         localStorage.setItem('token', res.data.access_token)
-        router.push('/dashboard')
+        localStorage.setItem('role', res.data.role)
+
+        if (res.data.role === 'admin' || res.data.role === 'logistics' || res.data.role === 'multi_dept') {
+            router.push('/dashboard')
+        } else if (res.data.role === 'vessel') {
+            router.push('/vessel-dashboard')
+        } else {
+            router.push('/dashboard')
+        }
     } catch (err) {
         // Capture the specific error from FastAPI (401 vs 403)
         if (err.response && err.response.data && err.response.data.detail) {
@@ -72,10 +80,7 @@ const handleLogin = async () => {
                 </button>
             </form>
 
-            <p class="mt-6 text-center text-sm text-gray-600">
-                New here?
-                <router-link to="/register" class="text-black font-bold underline ml-1">Create an account</router-link>
-            </p>
+
         </div>
     </div>
 </template>

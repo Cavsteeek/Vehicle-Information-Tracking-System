@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime
 from fastapi import FastAPI
 from .database import engine, Base
-from .routers import auth_routes, vehicle_routes
+from .routers import auth_routes, vehicle_routes, vessel_routes
 from . import scheduler  # starts background jobs
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -43,3 +43,4 @@ def force_email():
 
 app.include_router(auth_routes.router)
 app.include_router(vehicle_routes.router)
+app.include_router(vessel_routes.router)

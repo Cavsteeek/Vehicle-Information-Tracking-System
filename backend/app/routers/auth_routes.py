@@ -1,66 +1,13 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Body, Depends, HTTPException
+from typing import List
 from sqlalchemy.orm import Session
-import os
-from ..emailService import send_email
-from ..database import SessionLocal
+from ..database import get_db
 from ..models import User
-from ..schemas import UserCreate, Token, UserLogin
+from ..schemas import UserCreate, Token, UserLogin, UserResponse
 from ..auth import hash_password, verify_password, create_access_token
+from ..deps import get_current_user
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
-
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-@router.post("/register")
-def register(user: UserCreate, db: Session = Depends(get_db)):
-    # 1. Check for existing user
-    existing = db.query(User).filter(User.email == user.email).first()
-    if existing:
-        raise HTTPException(status_code=400, detail="Email already registered")
-
-    # 2. Create the new user
-    new_user = User(
-        name=user.name,
-        email=user.email,
-        hashed_password=hash_password(user.password)
-    )
-
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
-
-    # 3. ADMIN NOTIFICATION: Send email to YOU about this new registration
-    try:
-        admin_email = "chimdiebubeuzo@gmail.com"
-        admin_subject = "Action Required: New User Registration Request"
-        admin_body = f"""
-        <html>
-            <body style="font-family: sans-serif; color: #333;">
-                <div style="padding: 20px; border: 1px solid #000; border-radius: 8px;">
-                    <h2 style="color: #000;">New Access Request</h2>
-                    <p>A new user has registered and is waiting for approval:</p>
-                    <ul>
-                        <li><strong>Name:</strong> {new_user.name}</li>
-                        <li><strong>Email:</strong> {new_user.email}</li>
-                    </ul>
-                    <p>To grant access, add this email to your <strong>APPROVED_USERS</strong> list.</p>
-                </div>
-            </body>
-        </html>
-        """
-        # Using your existing send_email function
-        send_email(to=admin_email, subject=admin_subject, body=admin_body)
-    except Exception as e:
-        # We print the error but don't stop the registration process
-        print(f"DEBUG: Admin notification failed: {e}")
-
-    return {"message": "Registration successful. Access is pending admin approval."}
 
 @router.post("/login", response_model=Token)
 def login(user: UserLogin, db: Session = Depends(get_db)):
@@ -68,18 +15,90 @@ def login(user: UserLogin, db: Session = Depends(get_db)):
 
     if not db_user or not verify_password(user.password, db_user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
-    
-    raw_list = os.getenv("APPROVED_USERS", "chimdiebubeuzo@gmail.com")
-    APPROVED_USERS = [email.strip() for email in raw_list.split(",")]
-    
-    if db_user.email not in APPROVED_USERS:
-        raise HTTPException(status_code=403, detail="Account pending admin approval. Please contact chimdiebubeuzo@gmail.com")
+
+    if db_user.role not in ["logistics", "vessel", "admin", "multi_dept"]:
+        raise HTTPException(status_code=403, detail="Account not authorized. Please contact administrator.")
 
     access_token = create_access_token(
-        data={"sub": db_user.email}
+        data={"sub": db_user.email, "role": db_user.role}
     )
 
     return {
         "access_token": access_token,
-        "token_type": "bearer"
+        "token_type": "bearer",
+        "role": db_user.role
+    }
+
+@router.get("/users", response_model=List[UserResponse])
+def list_users(db: Session = Depends(get_db), current_user: str = Depends(get_current_user)):
+    # Admin-only
+    db_user = db.query(User).filter(User.email == current_user).first()
+    if not db_user or db_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Only admin can list users")
+    return db.query(User).all()
+
+@router.post("/users/create", response_model=UserResponse)
+def create_user(user: UserCreate, db: Session = Depends(get_db), current_user: str = Depends(get_current_user)):
+    # Admin-only endpoint to create users
+    db_admin = db.query(User).filter(User.email == current_user).first()
+    if not db_admin or db_admin.role != "admin":
+        raise HTTPException(status_code=403, detail="Only admin can create users")
+    
+    # Validate role
+    if user.role not in ["logistics", "vessel", "admin", "multi_dept"]:
+        raise HTTPException(status_code=400, detail="Invalid role. Must be: logistics, vessel, admin, or multi_dept")
+    
+    # Check if user already exists
+    existing = db.query(User).filter(User.email == user.email).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    # Create new user with specified role
+    new_user = User(
+        name=user.name,
+        email=user.email,
+        hashed_password=hash_password(user.password),
+        role=user.role
+    )
+    
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    
+    return new_user
+
+@router.put("/users/{user_id}/role")
+def update_user_role(user_id: int, role: str = Body(...), db: Session = Depends(get_db), current_user: str = Depends(get_current_user)):
+    db_admin = db.query(User).filter(User.email == current_user).first()
+    if not db_admin or db_admin.role != "admin":
+        raise HTTPException(status_code=403, detail="Only admin can update roles")
+
+    if role not in ["logistics", "vessel", "admin", "multi_dept"]:
+        raise HTTPException(status_code=400, detail="Invalid role")
+
+    user_to_update = db.query(User).filter(User.id == user_id).first()
+    if not user_to_update:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    user_to_update.role = role
+    db.add(user_to_update)
+    db.commit()
+    db.refresh(user_to_update)
+
+    return {"message": "Role updated", "user": {
+        "id": user_to_update.id,
+        "email": user_to_update.email,
+        "role": user_to_update.role
+    }}
+
+@router.get("/me")
+def get_current_user_info(db: Session = Depends(get_db), current_user: str = Depends(get_current_user)):
+    user = db.query(User).filter(User.email == current_user).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {
+        "id": user.id,
+        "name": user.name,
+        "email": user.email,
+        "role": user.role
     }

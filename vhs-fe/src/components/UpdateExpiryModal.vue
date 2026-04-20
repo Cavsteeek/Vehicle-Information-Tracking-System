@@ -3,7 +3,11 @@ import { ref } from 'vue'
 import api from '../api/http'
 
 const props = defineProps({
-    doc: Object // The document we are updating
+    doc: Object, // The document we are updating
+    mode: {
+        type: String,
+        default: 'vehicle' // 'vehicle' or 'vessel'
+    }
 })
 
 const emit = defineEmits(['close', 'refresh'])
@@ -14,7 +18,8 @@ const loading = ref(false)
 const handleUpdate = async () => {
     loading.value = true
     try {
-        await api.put(`/vehicles/documents/${props.doc.id}`, {
+        const endpoint = props.mode === 'vessel' ? `/vessel-docs/${props.doc.id}` : `/vehicles/documents/${props.doc.id}`
+        await api.put(endpoint, {
             new_expiry_date: newDate.value
         })
         emit('refresh')
@@ -33,7 +38,8 @@ const handleUpdate = async () => {
 
         <div class="relative bg-white w-full max-w-sm rounded-3xl shadow-2xl p-8">
             <h2 class="text-xl font-black mb-2 uppercase tracking-tight">Update Expiry</h2>
-            <p class="text-gray-500 text-sm mb-6 font-medium">{{ doc.document_type }}</p>
+            <p class="text-gray-500 text-sm mb-6 font-medium">{{ mode === 'vessel' ? doc.title : doc.document_type }}
+            </p>
 
             <div class="space-y-4">
                 <div class="space-y-1">

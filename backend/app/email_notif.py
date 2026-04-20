@@ -1,89 +1,129 @@
 from datetime import date
 from sqlalchemy.orm import Session
-from .models import VehicleDocument, User
+from .models import VehicleDocument, VesselDocument, User
 from .emailService import send_email
+
+
+def _compute_status(doc):
+    days_left = (doc.expiry_date - date.today()).days
+    if days_left < 0:
+        return "EXPIRED", "Expired"
+    if days_left <= doc.reminder_start_days:
+        return f"{days_left}d", f"{days_left} days left"
+    return "ACTIVE", "Active"
+
 
 def send_consolidated_alerts(db: Session, users: list, today: date, update_notified_flag=False):
     """
-    Finds both expired and expiring documents and sends one email per user.
+    Email alert for expiring/expired docs, split by truncated role.
     """
-    # 1. Fetch all documents
-    documents = db.query(VehicleDocument).all()
-        
-    # Identify docs that are expired OR expiring soon
-    expiring_items = []
-    for doc in documents:
-        days_left = (doc.expiry_date - today).days
-                
-        # Logic: Catch everything where days_left is less than or equal to the reminder window.
-        # This includes negative numbers (already expired).
-        if days_left <= doc.reminder_start_days:
-            if not update_notified_flag or doc.last_notified_at != today:
-                # Create a friendly label: "Expired" for negative, "X days" for future
-                status_text = "EXPIRED" if days_left < 0 else f"{days_left}d"
-                expiring_items.append({"doc": doc, "days_label": status_text})
+    vehicle_docs = db.query(VehicleDocument).all()
+    vessel_docs = db.query(VesselDocument).all()
 
-    print(f"DEBUG: Total items to email: {len(expiring_items)}")
-    
-    if not expiring_items:
+    vehicle_alerts = []
+    for d in vehicle_docs:
+        days_left = (d.expiry_date - today).days
+        if days_left <= d.reminder_start_days and (not update_notified_flag or d.last_notified_at != today):
+            status_code, status_label = _compute_status(d)
+            vehicle_alerts.append({"doc": d, "status_label": status_label, "days_left": days_left})
+
+    vessel_alerts = []
+    for d in vessel_docs:
+        days_left = (d.expiry_date - today).days
+        if days_left <= d.reminder_start_days and (not update_notified_flag or d.last_notified_at != today):
+            status_code, status_label = _compute_status(d)
+            vessel_alerts.append({"doc": d, "status_label": status_label, "days_left": days_left})
+
+    print(f"DEBUG: vehicle_alerts={len(vehicle_alerts)}, vessel_alerts={len(vessel_alerts)}")
+
+    if not vehicle_alerts and not vessel_alerts:
         return
 
-    # 2. Build the Email for each user
     for user in users:
-        table_rows = ""
-        for item in expiring_items:
-            d = item['doc']
-            v = d.vehicle
-            vehicle_info = f"{v.vehicle_type} - {v.registration_number}"
-            
-            table_rows += f"""
-            <tr style="border-bottom: 1px solid #eee;">
-                <td style="padding: 10px; font-size: 13px;"><strong>{vehicle_info}</strong></td>
-                <td style="padding: 10px; font-size: 13px;">{d.document_type}</td>
-                <td style="padding: 10px; font-size: 13px;">{d.expiry_date}</td>
-                <td style="padding: 10px; font-size: 13px; font-weight: bold;">{item['days_label']}</td>
-            </tr>
-            """
+        if user.role == "admin":
+            relevant_vehicles = vehicle_alerts
+            relevant_vessels = vessel_alerts
+        elif user.role == "logistics":
+            relevant_vehicles = vehicle_alerts
+            relevant_vessels = []
+        elif user.role == "vessel":
+            relevant_vehicles = []
+            relevant_vessels = vessel_alerts
+        else:
+            continue
 
-        subject = f"Urgent: {len(expiring_items)} Vehicle Document(s) Require Attention"
+        if not relevant_vehicles and not relevant_vessels:
+            continue
+
+        rows = ""
+
+        if relevant_vehicles:
+            for item in relevant_vehicles:
+                d = item["doc"]
+                v = d.vehicle
+                vehicle_info = f"{v.vehicle_type} - {v.registration_number}"
+                rows += f"""
+                <tr style=\"border-bottom: 1px solid #eee;\">
+                    <td style=\"padding: 10px; font-size: 13px;\"><strong>{vehicle_info}</strong></td>
+                    <td style=\"padding: 10px; font-size: 13px;\">{d.document_type}</td>
+                    <td style=\"padding: 10px; font-size: 13px;\">{d.expiry_date}</td>
+                    <td style=\"padding: 10px; font-size: 13px; font-weight: bold;\">{item['status_label']}</td>
+                </tr>
+                """
+
+        if relevant_vessels:
+            for item in relevant_vessels:
+                d = item["doc"]
+                vessel_name = d.vessel.name if d.vessel else "Unknown"
+                rows += f"""
+                <tr style=\"border-bottom: 1px solid #eee;\">
+                    <td style=\"padding: 10px; font-size: 13px;\"><strong>{vessel_name}</strong></td>
+                    <td style=\"padding: 10px; font-size: 13px;\">{d.title}</td>
+                    <td style=\"padding: 10px; font-size: 13px;\">{d.expiry_date}</td>
+                    <td style=\"padding: 10px; font-size: 13px; font-weight: bold;\">{item['status_label']}</td>
+                </tr>
+                """
+
+        subject = "Urgent: Document(s) Require Attention"
         body = f"""
         <html>
-        <body style="font-family: sans-serif; color: #333;">
-            <div style="max-width: 600px; margin: 0 auto; border: 1px solid #000; border-radius: 10px; overflow: hidden;">
-                <div style="background-color: #000; color: #fff; padding: 20px; text-align: center;">
-                    <h1 style="margin: 0; font-size: 20px;">Document Status Summary</h1>
+        <body style=\"font-family: sans-serif; color: #333;\">
+            <div style=\"max-width: 600px; margin: 0 auto; border: 1px solid #000; border-radius: 10px; overflow: hidden;\">
+                <div style=\"background-color: #000; color: #fff; padding: 20px; text-align: center;\">
+                    <h1 style=\"margin: 0; font-size: 20px;\">Document Status Summary</h1>
                 </div>
-                <div style="padding: 20px;">
+                <div style=\"padding: 20px;\">
                     <p>Hello <strong>{user.name}</strong>,</p>
                     <p>The following documents are either expired or expiring soon:</p>
-                    <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+                    <table style=\"width: 100%; border-collapse: collapse; margin: 20px 0;\">
                         <thead>
-                           <tr style="background-color: #f4f4f4; text-align: left;">
-                                <th style="padding: 10px; font-size: 12px;">Vehicle</th>
-                                <th style="padding: 10px; font-size: 12px;">Document</th>
-                                <th style="padding: 10px; font-size: 12px;">Expiry Date</th>
-                                <th style="padding: 10px; font-size: 12px;">Status</th>
+                            <tr style=\"background-color: #f4f4f4; text-align: left;\">
+                                <th style=\"padding: 10px; font-size: 12px;\">Entity</th>
+                                <th style=\"padding: 10px; font-size: 12px;\">Document</th>
+                                <th style=\"padding: 10px; font-size: 12px;\">Expiry Date</th>
+                                <th style=\"padding: 10px; font-size: 12px;\">Status</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {table_rows}
+                            {rows}
                         </tbody>
                     </table>
-                    <p style="font-size: 13px; color: #666;">Please update these records in the portal once renewed.</p>
+                    <p style=\"font-size: 13px; color: #666;\">Please update these records in the portal once renewed.</p>
                 </div>
             </div>
         </body>
         </html>
         """
-        
+
         try:
             print(f"Sending summary to {user.email}")
             send_email(to=user.email, subject=subject, body=body)
         except Exception as e:
             print(f"Failed to send email to {user.email}: {e}")
 
-    # 3. Update 'last_notified_at'
     if update_notified_flag:
-        for item in expiring_items:
-            item['doc'].last_notified_at = today
+        for item in vehicle_alerts:
+            item["doc"].last_notified_at = today
+        for item in vessel_alerts:
+            item["doc"].last_notified_at = today
         db.commit()

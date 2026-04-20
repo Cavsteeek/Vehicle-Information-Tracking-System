@@ -1,8 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
 import Login from '../views/Login.vue'
-import Register from '../views/Register.vue'
 import Dashboard from '../views/Dashboard.vue'
+import VesselDashboard from '../views/VesselDashboard.vue'
 
 const routes = [
     {
@@ -14,12 +14,13 @@ const routes = [
         component: Login
     },
     {
-        path: '/register',
-        component: Register
-    },
-    {
         path: '/dashboard',
         component: Dashboard,
+        meta: { requiresAuth: true }
+    },
+    {
+        path: '/vessel-dashboard',
+        component: VesselDashboard,
         meta: { requiresAuth: true }
     }
 ]

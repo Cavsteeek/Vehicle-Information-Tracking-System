@@ -4,12 +4,14 @@ import { useRouter } from 'vue-router'
 import api from '../api/http'
 import VehicleCard from '../components/VehicleCard.vue'
 import AddVehicleModal from '../components/AddVehicleModal.vue'
+import CreateUserModal from '../components/CreateUserModal.vue'
 import UpdateExpiryModal from '../components/UpdateExpiryModal.vue'
 import DeleteConfirmModal from '../components/DeleteConfirmModal.vue'
 
 const router = useRouter()
 const vehicles = ref([])
 const userEmail = ref('')
+const userRole = ref(localStorage.getItem('role') || '')
 const loading = ref(true)
 
 // --- SEARCH & PAGINATION ---
@@ -60,10 +62,12 @@ const fetchData = async () => {
 // --- ACTIONS ---
 const handleLogout = () => {
     localStorage.removeItem('token')
+    localStorage.removeItem('role')
     router.push('/login')
 }
 
 const showAddModal = ref(false)
+const showCreateUserModal = ref(false)
 const showUpdateModal = ref(false)
 const selectedDoc = ref(null)
 const showDeleteModal = ref(false)
@@ -95,51 +99,83 @@ const handleRenew = (doc) => {
     showUpdateModal.value = true
 }
 
-onMounted(fetchData)
+onMounted(async () => {
+    // Restrict access: only logistics, admin, and multi_dept users can access vehicle dashboard
+    if (!['logistics', 'admin', 'multi_dept'].includes(userRole.value)) {
+        router.push('/vessel-dashboard')
+        return
+    }
+    await fetchData()
+})
 </script>
 
 <template>
     <div class="min-h-screen bg-gray-100">
-        <nav class="bg-white shadow-sm px-8 py-4 flex justify-between items-center sticky top-0 z-50">
-            <div class="flex items-center gap-4">
-                <h1 class="text-xl font-black text-gray-800 tracking-tighter">VPMS</h1>
-                <div class="h-6 w-[1px] bg-gray-200"></div>
-                <span class="text-sm font-medium text-gray-500">{{ userEmail }}</span>
+        <nav
+            class="bg-white shadow-sm px-4 sm:px-6 lg:px-8 py-3 sm:py-4 flex justify-between items-center sticky top-0 z-50">
+            <div class="flex items-center gap-2 sm:gap-4">
+                <h1 class="text-lg sm:text-xl font-black text-gray-800 tracking-tighter">VPMS</h1>
+                <div class="h-4 sm:h-6 w-[1px] bg-gray-200"></div>
+                <span class="text-xs sm:text-sm font-medium text-gray-500 truncate max-w-[120px] sm:max-w-none">{{
+                    userEmail }} - {{ userRole }}</span>
             </div>
 
-            <button @click="handleLogout"
-                class="flex items-center gap-2 text-gray-600 hover:text-red-600 font-bold text-sm transition uppercase tracking-wider">
-                <span>Logout</span>
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                </svg>
-            </button>
+            <div class="flex items-center gap-2 sm:gap-4 md:gap-6">
+                <button v-if="userRole === 'admin'" @click="showCreateUserModal = true"
+                    class="px-2 sm:px-4 py-2 text-xs sm:text-sm font-bold text-white bg-green-600 hover:bg-green-700 rounded-lg transition flex items-center gap-1 sm:gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4" viewBox="0 0 20 20"
+                        fill="currentColor">
+                        <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                        <path fill-rule="evenodd"
+                            d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
+                            clip-rule="evenodd" />
+                    </svg>
+                    <span class="hidden sm:inline">Create User</span>
+                    <span class="sm:hidden">User</span>
+                </button>
+                <button v-if="userRole === 'admin' || userRole === 'multi_dept'"
+                    @click="router.push('/vessel-dashboard')"
+                    class="px-2 sm:px-4 py-2 text-xs sm:text-sm font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition">
+                    <span class="hidden sm:inline">Vessel Dashboard</span>
+                    <span class="sm:hidden">Vessels</span>
+                </button>
+                <button @click="handleLogout"
+                    class="flex items-center gap-1 sm:gap-2 text-gray-600 hover:text-red-600 font-bold text-xs sm:text-sm transition uppercase tracking-wider">
+                    <span class="hidden sm:inline">Logout</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                </button>
+            </div>
         </nav>
 
-        <main class="max-w-7xl mx-auto py-8 px-6">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 gap-6">
-                <div>
-                    <h2 class="text-3xl font-black text-gray-900">Fleet Overview</h2>
-                    <p class="text-gray-500 font-medium">Monitoring {{ vehicles.length }} active vehicles.</p>
+        <main class="max-w-7xl mx-auto py-6 sm:py-8 px-4 sm:px-6">
+            <div
+                class="flex flex-col lg:flex-row justify-between items-start lg:items-end mb-8 sm:mb-10 gap-4 sm:gap-6">
+                <div class="w-full lg:w-auto">
+                    <h2 class="text-2xl sm:text-3xl font-black text-gray-900">Fleet Overview</h2>
+                    <p class="text-gray-500 font-medium text-sm sm:text-base">Monitoring {{ vehicles.length }} active
+                        vehicle(s).</p>
                 </div>
 
-                <div class="flex w-full md:w-auto gap-4">
-                    <div class="relative flex-1 md:w-64">
-                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                                stroke="currentColor">
+                <div class="flex flex-col sm:flex-row w-full lg:w-auto gap-3 sm:gap-4">
+                    <div class="relative flex-1 sm:w-64 lg:w-80">
+                        <span
+                            class="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                             </svg>
                         </span>
                         <input v-model="searchQuery" type="text" placeholder="Search by plate or model..."
-                            class="w-full bg-white border-none shadow-sm pl-12 pr-10 py-3 rounded-xl focus:ring-2 focus:ring-black transition outline-none font-bold text-sm" />
+                            class="w-full bg-white border-none shadow-sm pl-10 sm:pl-12 pr-10 py-3 rounded-xl focus:ring-2 focus:ring-black transition outline-none font-bold text-sm" />
 
                         <button v-if="searchQuery" @click="searchQuery = ''"
                             class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 hover:text-black transition">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20"
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5" viewBox="0 0 20 20"
                                 fill="currentColor">
                                 <path fill-rule="evenodd"
                                     d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
@@ -149,13 +185,15 @@ onMounted(fetchData)
                     </div>
 
                     <button @click="showAddModal = true"
-                        class="bg-black text-white px-6 py-3 rounded-xl font-bold hover:bg-gray-800 transition shadow-lg flex items-center gap-2 whitespace-nowrap active:scale-95">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        class="bg-black text-white px-4 sm:px-6 py-3 rounded-xl font-bold hover:bg-gray-800 transition shadow-lg flex items-center gap-2 whitespace-nowrap active:scale-95 text-sm sm:text-base">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5" viewBox="0 0 20 20"
+                            fill="currentColor">
                             <path fill-rule="evenodd"
                                 d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
                                 clip-rule="evenodd" />
                         </svg>
-                        Add Vehicle
+                        <span class="hidden sm:inline">Add Vehicle</span>
+                        <span class="sm:hidden">Add</span>
                     </button>
                 </div>
             </div>
@@ -165,7 +203,7 @@ onMounted(fetchData)
             </div>
 
             <div v-else-if="filteredVehicles.length > 0">
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
                     <VehicleCard v-for="vehicle in filteredVehicles" :key="vehicle.id" :vehicle="vehicle"
                         @renew="handleRenew" @delete="confirmDelete(vehicle)" />
                 </div>
@@ -203,6 +241,7 @@ onMounted(fetchData)
     </div>
 
     <AddVehicleModal v-if="showAddModal" @close="showAddModal = false" @refresh="fetchData" />
+    <CreateUserModal v-if="showCreateUserModal" @close="showCreateUserModal = false" @refresh="fetchData" />
     <UpdateExpiryModal v-if="showUpdateModal" :doc="selectedDoc" @close="showUpdateModal = false"
         @refresh="fetchData" />
     <DeleteConfirmModal v-if="showDeleteModal" :vehicleNumber="vehicleToDelete?.registration_number"

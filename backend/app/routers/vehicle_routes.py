@@ -1,33 +1,26 @@
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from ..database import SessionLocal
-from ..models import Vehicle, VehicleDocument, AuditLog
+from ..database import get_db
+from ..models import User, Vehicle, VehicleDocument, AuditLog
 from ..schemas import DocumentRenewRequest, VehicleCreate, VehicleResponse
-from ..deps import get_current_user
+from ..deps import get_current_user, require_roles
 import json
 from datetime import date
-from app.email_notif import send_consolidated_alerts
-
+from ..email_notif import send_consolidated_alerts
 
 router = APIRouter(prefix="/vehicles", tags=["Vehicles"])
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
 @router.get("/whoami")
-def whoami(current_user: str = Depends(get_current_user)):
-    return {"email": current_user}
+def whoami(current_user: str = Depends(get_current_user), role: str = Depends(require_roles("logistics", "admin", "multi_dept"))):
+    return {"email": current_user, "role": role}
 
 # Get all vehicles
 @router.get("/", response_model=List[VehicleResponse])
 def get_all_vehicles(
     db: Session = Depends(get_db),
-    current_user: str = Depends(get_current_user)
+    current_user: str = Depends(get_current_user),
+    role: str = Depends(require_roles("logistics", "admin", "multi_dept"))
 ):
     """Fetch all vehicles and their associated documents."""
     vehicles = db.query(Vehicle).all()
@@ -38,7 +31,8 @@ def get_all_vehicles(
 def get_vehicle(
     vehicle_id: int,
     db: Session = Depends(get_db),
-    current_user: str = Depends(get_current_user)
+    current_user: str = Depends(get_current_user),
+    role: str = Depends(require_roles("logistics", "admin", "multi_dept"))
 ):
     vehicle = db.query(Vehicle).filter(Vehicle.id == vehicle_id).first()
     if not vehicle:
@@ -50,7 +44,8 @@ def get_vehicle(
 def delete_vehicle(
     vehicle_id: int,
     db: Session = Depends(get_db),
-    current_user: str = Depends(get_current_user)
+    current_user: str = Depends(get_current_user),
+    role: str = Depends(require_roles("logistics", "admin", "multi_dept"))
 ):
     vehicle = db.query(Vehicle).filter(Vehicle.id == vehicle_id).first()
     if not vehicle:
@@ -65,7 +60,8 @@ def delete_vehicle(
 def create_vehicle(
     vehicle: VehicleCreate,
     db: Session = Depends(get_db),
-    user_email: str = Depends(get_current_user)
+    user_email: str = Depends(get_current_user),
+    role: str = Depends(require_roles("logistics", "admin", "multi_dept"))
 ):
     db_vehicle = Vehicle(
         registration_number=vehicle.registration_number,
@@ -103,13 +99,11 @@ def create_vehicle(
     db.commit()
     if has_urgent_doc:
         try:
-            # Fetch only approved users from DB
-            from .auth_routes import APPROVED_USERS # Adjust path if needed
-            approved_users = db.query(User).filter(User.email.in_(APPROVED_USERS)).all()
-            
-            if approved_users:
+            # Send instant alert to all users for urgent vehicle documents
+            all_users = db.query(User).all()
+            if all_users:
                 print(f"DEBUG: Triggering instant alert for new urgent vehicle.")
-                send_consolidated_alerts(db, approved_users, date.today(), update_notified_flag=False)
+                send_consolidated_alerts(db, all_users, date.today(), update_notified_flag=False)
         except Exception as e:
             print(f"DEBUG: Instant notification failed: {e}")
     
@@ -120,23 +114,22 @@ def update_document(
     doc_id: int,
     payload: DocumentRenewRequest,
     db: Session = Depends(get_db),
-    user_email: str = Depends(get_current_user)
+    user_email: str = Depends(get_current_user),
+    role: str = Depends(require_roles("logistics", "admin", "multi_dept"))
 ):
     doc = db.query(VehicleDocument).filter_by(id=doc_id).first()
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
 
     old_value = {
-        "expiry_date": str(doc.expiry_date),
-        "status": doc.status
+        "expiry_date": str(doc.expiry_date)
     }
 
     doc.expiry_date = payload.new_expiry_date
-    doc.status = "ACTIVE"
     doc.last_updated_by = user_email
 
     db.add(AuditLog(
-        entity_type="DOCUMENT",
+        entity_type="VEHICLE_DOCUMENT",
         entity_id=doc.id,
         action="RENEW",
         performed_by=user_email,

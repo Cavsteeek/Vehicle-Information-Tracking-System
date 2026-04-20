@@ -1,3 +1,4 @@
+from datetime import date
 from sqlalchemy import (
     Column, Integer, String, Date, DateTime,
     ForeignKey, Text
@@ -15,9 +16,25 @@ class User(Base):
     name = Column(String, nullable=False)
     email = Column(String, unique=True, index=True)
     hashed_password = Column(String, nullable=False)
+    role = Column(String, nullable=False, default="logistics")
     created_at = Column(
         DateTime(timezone=True),
         server_default=func.now()
+    )
+
+# ===================== VESSELS =====================
+
+class Vessel(Base):
+    __tablename__ = "vessels"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False, unique=True)
+    description = Column(String, nullable=True)
+
+    documents = relationship(
+        "VesselDocument",
+        back_populates="vessel",
+        cascade="all, delete"
     )
 
 # ===================== VEHICLES =====================
@@ -39,6 +56,8 @@ class Vehicle(Base):
         cascade="all, delete"
     )
 
+from sqlalchemy.ext.hybrid import hybrid_property
+
 # ===================== VEHICLE DOCUMENTS =====================
 
 class VehicleDocument(Base):
@@ -56,9 +75,6 @@ class VehicleDocument(Base):
     reminder_start_days = Column(Integer, default=21)
     last_notified_at = Column(Date, nullable=True)
 
-    # Business status
-    status = Column(String, default="ACTIVE")
-
     # Non-repudiation
     last_updated_by = Column(String)
     last_updated_at = Column(
@@ -68,6 +84,53 @@ class VehicleDocument(Base):
     )
 
     vehicle = relationship("Vehicle", back_populates="documents")
+
+    @hybrid_property
+    def status(self):
+        if self.expiry_date is None:
+            return "unknown"
+        today = date.today()
+        if self.expiry_date < today:
+            return "expired"
+        elif (self.expiry_date - today).days <= 30:
+            return "expiring_soon"
+        else:
+            return "valid"
+
+# ===================== VESSEL DOCUMENTS =====================
+
+class VesselDocument(Base):
+    __tablename__ = "vessel_documents"
+
+    id = Column(Integer, primary_key=True, index=True)
+    vessel_id = Column(Integer, ForeignKey("vessels.id"))
+    title = Column(String, nullable=False)
+    expiry_date = Column(Date, nullable=False)
+    issued_date = Column(Date, nullable=True)
+
+    reminder_start_days = Column(Integer, default=21)
+    last_notified_at = Column(Date, nullable=True)
+
+    last_updated_by = Column(String)
+    last_updated_at = Column(
+        DateTime,
+        server_default=func.now(),
+        onupdate=func.now()
+    )
+
+    vessel = relationship("Vessel", back_populates="documents")
+
+    @hybrid_property
+    def status(self):
+        if self.expiry_date is None:
+            return "unknown"
+        today = date.today()
+        if self.expiry_date < today:
+            return "expired"
+        elif (self.expiry_date - today).days <= 30:
+            return "expiring_soon"
+        else:
+            return "valid"
 
 # ===================== AUDIT LOG =====================
 

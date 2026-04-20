@@ -8,6 +8,16 @@ class UserCreate(BaseModel):
     name: str
     email: str
     password: str
+    role: str = "logistics"  # Default role for registration
+
+class UserResponse(BaseModel):
+    id: int
+    name: str
+    email: str
+    role: str
+
+    class Config:
+        from_attributes = True
 
 class UserLogin(BaseModel):
     email: str
@@ -17,6 +27,40 @@ class UserLogin(BaseModel):
 class Token(BaseModel):
     access_token: str
     token_type: str
+    role: str
+
+# ===================== VESSELS =====================
+
+class VesselCreate(BaseModel):
+    name: str
+    description: Optional[str] = None
+
+class VesselResponse(BaseModel):
+    id: int
+    name: str
+    description: Optional[str] = None
+    documents: List[VesselDocumentResponse]
+
+    class Config:
+        from_attributes = True
+
+class VesselDocumentCreate(BaseModel):
+    title: str
+    expiry_date: date
+    issued_date: Optional[date] = None
+    reminder_start_days: int = 21
+
+class VesselDocumentResponse(BaseModel):
+    id: int
+    title: str
+    expiry_date: date
+    issued_date: Optional[date] = None
+    status: str
+    last_updated_by: Optional[str] = None
+    last_updated_at: datetime
+
+    class Config:
+        from_attributes = True
 
 # ===================== VEHICLES =====================
 
