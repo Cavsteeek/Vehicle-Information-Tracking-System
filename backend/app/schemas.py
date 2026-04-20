@@ -23,26 +23,12 @@ class UserLogin(BaseModel):
     email: str
     password: str
 
-
 class Token(BaseModel):
     access_token: str
     token_type: str
     role: str
 
-# ===================== VESSELS =====================
-
-class VesselCreate(BaseModel):
-    name: str
-    description: Optional[str] = None
-
-class VesselResponse(BaseModel):
-    id: int
-    name: str
-    description: Optional[str] = None
-    documents: List[VesselDocumentResponse]
-
-    class Config:
-        from_attributes = True
+# ===================== VESSEL DOCUMENTS (Define first for dependencies) =====================
 
 class VesselDocumentCreate(BaseModel):
     title: str
@@ -62,22 +48,27 @@ class VesselDocumentResponse(BaseModel):
     class Config:
         from_attributes = True
 
-# ===================== VEHICLES =====================
+# ===================== VESSELS =====================
+
+class VesselCreate(BaseModel):
+    name: str
+    description: Optional[str] = None
+
+class VesselResponse(BaseModel):
+    id: int
+    name: str
+    description: Optional[str] = None
+    documents: List[VesselDocumentResponse]
+
+    class Config:
+        from_attributes = True
+
+# ===================== VEHICLE DOCUMENTS (Define first for dependencies) =====================
 
 class VehicleDocumentCreate(BaseModel):
     document_type: str
     expiry_date: date
     reminder_start_days: int = 21
-
-
-class VehicleCreate(BaseModel):
-    registration_number: str
-    type: str
-    owner: str
-    purchase_date: Optional[date] = None
-    remark: Optional[str] = None
-    documents: List[VehicleDocumentCreate]
-
 
 class VehicleDocumentResponse(BaseModel):
     id: int
@@ -90,6 +81,15 @@ class VehicleDocumentResponse(BaseModel):
     class Config:
         from_attributes = True
 
+# ===================== VEHICLES =====================
+
+class VehicleCreate(BaseModel):
+    registration_number: str
+    type: str
+    owner: str
+    purchase_date: Optional[date] = None
+    remark: Optional[str] = None
+    documents: List[VehicleDocumentCreate]
 
 class VehicleResponse(BaseModel):
     id: int
@@ -98,6 +98,27 @@ class VehicleResponse(BaseModel):
     owner: str
     purchase_date: Optional[date] = None
     documents: List[VehicleDocumentResponse]
+      
+    class Config:
+        from_attributes = True
+        
+class DocumentRenewRequest(BaseModel):
+    new_expiry_date: date
+
+# ===================== AUDIT =====================
+
+class AuditLogResponse(BaseModel):
+    id: int
+    entity_type: str
+    entity_id: int
+    action: str
+    performed_by: str
+    performed_at: str
+    old_value: Optional[str]
+    new_value: Optional[str]
+
+    class Config:
+        from_attributes = True
       
     class Config:
         from_attributes = True
