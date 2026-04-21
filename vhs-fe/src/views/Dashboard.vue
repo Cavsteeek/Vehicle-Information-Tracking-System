@@ -220,7 +220,7 @@ onMounted(async () => {
                                 clip-rule="evenodd" />
                         </svg>
                         <span class="hidden sm:inline">Add Vehicle</span>
-                        <span class="sm:hidden">Add</span>
+                        <span class="sm:hidden">Add Vehicle</span>
                     </button>
                 </div>
             </div>
