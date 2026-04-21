@@ -1,8 +1,10 @@
 <script setup>
 import { ref, reactive } from 'vue'
+import { useToast } from '../composables/useToast'
 import api from '../api/http'
 
 const emit = defineEmits(['close', 'refresh'])
+const { error: showError } = useToast()
 
 const loading = ref(false)
 const error = ref('')
@@ -21,7 +23,9 @@ const handleSubmit = async () => {
         emit('close')
     } catch (err) {
         const detail = err.response?.data?.detail
-        error.value = Array.isArray(detail) ? detail[0].msg : detail || "Error"
+        const errorMsg = Array.isArray(detail) ? detail[0].msg : detail || "Error"
+        error.value = errorMsg
+        showError(errorMsg)
     } finally {
         loading.value = false
     }

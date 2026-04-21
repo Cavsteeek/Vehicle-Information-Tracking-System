@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useToast } from '../composables/useToast'
 import api from '../api/http'
 import VesselCard from '../components/VesselCard.vue'
 import AddVesselModal from '../components/AddVesselModal.vue'
@@ -9,6 +10,7 @@ import CreateUserModal from '../components/CreateUserModal.vue'
 import UpdateExpiryModal from '../components/UpdateExpiryModal.vue'
 
 const router = useRouter()
+const { success, error } = useToast()
 const vessels = ref([])
 const loading = ref(true)
 const userRole = ref(localStorage.getItem('role') || '')
@@ -46,6 +48,7 @@ const fetchVessels = async () => {
         vessels.value = res.data
     } catch (err) {
         if (err.response?.status === 401) router.push('/login')
+        else error('Failed to load vessels')
     } finally {
         loading.value = false
     }
@@ -70,11 +73,47 @@ const handleAddDoc = (vessel) => {
 const handleDelete = async (doc) => {
     if (!doc) return
     try {
+        // Optimistic UI: remove immediately
+        const vesselIndex = vessels.value.findIndex(v => v.id === doc.vessel_id)
+        if (vesselIndex > -1) {
+            const docIndex = vessels.value[vesselIndex].documents.findIndex(d => d.id === doc.id)
+            if (docIndex > -1) {
+                vessels.value[vesselIndex].documents.splice(docIndex, 1)
+            }
+        }
+
+        // API call
         await api.delete(`/vessel-docs/${doc.id}`)
-        await fetchVessels()
+        success('Document deleted successfully')
     } catch (err) {
-        alert('Failed to delete document')
+        // Rollback on error
+        await fetchVessels()
+        error('Failed to delete document')
     }
+}
+
+const onVesselAdded = () => {
+    showAddModal.value = false
+    success('Vessel added successfully')
+    fetchVessels()
+}
+
+const onUserCreated = () => {
+    showCreateUserModal.value = false
+    success('User added successfully')
+    fetchVessels()
+}
+
+const onDocAdded = () => {
+    showAddDocModal.value = false
+    success('Document added successfully')
+    fetchVessels()
+}
+
+const onDocUpdated = () => {
+    showUpdateModal.value = false
+    success('Document updated successfully')
+    fetchVessels()
 }
 
 onMounted(async () => {
@@ -101,7 +140,7 @@ onMounted(async () => {
                             d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
                             clip-rule="evenodd" />
                     </svg>
-                    <span class="hidden sm:inline">Create User</span>
+                    <span class="hidden sm:inline">New User</span>
                     <span class="sm:hidden">New User</span>
                 </button>
                 <button v-if="userRole === 'admin' || userRole === 'multi_dept'" @click="router.push('/dashboard')"
@@ -179,11 +218,11 @@ onMounted(async () => {
             </div>
         </main>
 
-        <AddVesselModal v-if="showAddModal" @close="showAddModal = false" @refresh="fetchVessels" />
-        <CreateUserModal v-if="showCreateUserModal" @close="showCreateUserModal = false" @refresh="fetchVessels" />
+        <AddVesselModal v-if="showAddModal" @close="showAddModal = false" @refresh="onVesselAdded" />
+        <CreateUserModal v-if="showCreateUserModal" @close="showCreateUserModal = false" @refresh="onUserCreated" />
         <AddVesselDocModal v-if="showAddDocModal" :vessel="selectedVessel" @close="showAddDocModal = false"
-            @refresh="fetchVessels" />
+            @refresh="onDocAdded" />
         <UpdateExpiryModal v-if="showUpdateModal" :doc="selectedDoc" mode="vessel" @close="showUpdateModal = false"
-            @refresh="fetchVessels" />
+            @refresh="onDocUpdated" />
     </div>
 </template>

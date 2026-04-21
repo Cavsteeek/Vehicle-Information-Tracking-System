@@ -1,5 +1,6 @@
 <script setup>
 import { ref } from 'vue'
+import { useToast } from '../composables/useToast'
 import api from '../api/http'
 
 const props = defineProps({
@@ -10,6 +11,7 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['close', 'refresh'])
+const { error: showError } = useToast()
 
 const title = ref('')
 const expiry_date = ref('')
@@ -20,6 +22,7 @@ const error = ref('')
 const submit = async () => {
     if (!title.value || !expiry_date.value) {
         error.value = 'Title and expiry date are required'
+        showError('Title and expiry date are required')
         return
     }
 
@@ -35,7 +38,9 @@ const submit = async () => {
         emit('refresh')
         emit('close')
     } catch (err) {
-        error.value = err.response?.data?.detail || 'Error creating document'
+        const errorMsg = err.response?.data?.detail || 'Error creating document'
+        error.value = errorMsg
+        showError(errorMsg)
     } finally {
         loading.value = false
     }
@@ -48,7 +53,13 @@ const submit = async () => {
         <div class="relative bg-white w-full max-w-md rounded-3xl shadow-2xl p-8">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-2xl font-black text-gray-800">Add Vessel Document</h2>
-                <button @click="emit('close')" class="text-gray-400 hover:text-black">x</button>
+                <button @click="emit('close')" class="text-gray-400 hover:text-black">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
             </div>
             <p v-if="error" class="bg-red-50 text-red-600 p-3 rounded-lg mb-4 text-sm font-bold">{{ error }}</p>
             <form @submit.prevent="submit" class="space-y-4">

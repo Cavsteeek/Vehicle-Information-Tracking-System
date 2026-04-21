@@ -1,8 +1,10 @@
 <script setup>
 import { ref, reactive } from 'vue'
+import { useToast } from '../composables/useToast'
 import api from '../api/http'
 
 const emit = defineEmits(['close', 'refresh'])
+const { error: showError } = useToast()
 
 const loading = ref(false)
 const error = ref('')
@@ -28,26 +30,32 @@ const handleSubmit = async () => {
     // Validation
     if (!form.name.trim()) {
         error.value = 'Name is required'
+        showError('Name is required')
         return
     }
     if (!form.email.trim()) {
         error.value = 'Email is required'
+        showError('Email is required')
         return
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
         error.value = 'Invalid email format'
+        showError('Invalid email format')
         return
     }
     if (!form.password) {
         error.value = 'Password is required'
+        showError('Password is required')
         return
     }
     if (form.password.length < 6) {
         error.value = 'Password must be at least 6 characters'
+        showError('Password must be at least 6 characters')
         return
     }
     if (form.password !== form.confirmPassword) {
         error.value = 'Passwords do not match'
+        showError('Passwords do not match')
         return
     }
 
@@ -62,7 +70,9 @@ const handleSubmit = async () => {
         emit('refresh')
         emit('close')
     } catch (err) {
-        error.value = err.response?.data?.detail || 'Failed to create user'
+        const errorMsg = err.response?.data?.detail || 'Failed to create user'
+        error.value = errorMsg
+        showError(errorMsg)
     } finally {
         loading.value = false
     }

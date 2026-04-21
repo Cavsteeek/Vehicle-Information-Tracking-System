@@ -1,5 +1,6 @@
 <script setup>
 import { ref } from 'vue'
+import { useToast } from '../composables/useToast'
 import api from '../api/http'
 
 const props = defineProps({
@@ -11,6 +12,7 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['close', 'refresh'])
+const { success, error: showError } = useToast()
 
 const newDate = ref(props.doc?.expiry_date || '')
 const loading = ref(false)
@@ -25,7 +27,7 @@ const handleUpdate = async () => {
         emit('refresh')
         emit('close')
     } catch (err) {
-        alert("Update failed")
+        showError("Update failed")
     } finally {
         loading.value = false
     }

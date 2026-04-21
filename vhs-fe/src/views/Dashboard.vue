@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { useToast } from '../composables/useToast'
 import api from '../api/http'
 import VehicleCard from '../components/VehicleCard.vue'
 import AddVehicleModal from '../components/AddVehicleModal.vue'
@@ -9,6 +10,7 @@ import UpdateExpiryModal from '../components/UpdateExpiryModal.vue'
 import DeleteConfirmModal from '../components/DeleteConfirmModal.vue'
 
 const router = useRouter()
+const { success, error, info } = useToast()
 const vehicles = ref([])
 const userEmail = ref('')
 const userRole = ref(localStorage.getItem('role') || '')
@@ -54,6 +56,7 @@ const fetchData = async () => {
         vehicles.value = vehicleRes.data
     } catch (err) {
         if (err.response?.status === 401) router.push('/login')
+        else error('Failed to load vehicles')
     } finally {
         loading.value = false
     }
@@ -82,12 +85,24 @@ const confirmDelete = (vehicle) => {
 const handleDelete = async () => {
     if (!vehicleToDelete.value) return
     deleteLoading.value = true
+    const deletedVehicle = vehicleToDelete.value
+
     try {
-        await api.delete(`/vehicles/${vehicleToDelete.value.id}`)
-        await fetchData()
+        // Optimistic UI: remove immediately
+        const index = vehicles.value.findIndex(v => v.id === deletedVehicle.id)
+        if (index > -1) {
+            vehicles.value.splice(index, 1)
+        }
+
+        // API call
+        await api.delete(`/vehicles/${deletedVehicle.id}`)
+        success(`Vehicle ${deletedVehicle.registration_number} deleted`)
         showDeleteModal.value = false
     } catch (err) {
-        alert("Failed to delete vehicle")
+        // Rollback on error
+        const vehicleRes = await api.get('/vehicles/')
+        vehicles.value = vehicleRes.data
+        error('Failed to delete vehicle')
     } finally {
         deleteLoading.value = false
         vehicleToDelete.value = null
@@ -97,6 +112,24 @@ const handleDelete = async () => {
 const handleRenew = (doc) => {
     selectedDoc.value = doc
     showUpdateModal.value = true
+}
+
+const onVehicleAdded = () => {
+    showAddModal.value = false
+    success('Vehicle added successfully')
+    fetchData()
+}
+
+const onUserCreated = () => {
+    showCreateUserModal.value = false
+    success('User added successfully')
+    fetchData()
+}
+
+const onDocumentUpdated = () => {
+    showUpdateModal.value = false
+    success('Document updated successfully')
+    fetchData()
 }
 
 onMounted(async () => {
@@ -234,10 +267,10 @@ onMounted(async () => {
         </main>
     </div>
 
-    <AddVehicleModal v-if="showAddModal" @close="showAddModal = false" @refresh="fetchData" />
-    <CreateUserModal v-if="showCreateUserModal" @close="showCreateUserModal = false" @refresh="fetchData" />
+    <AddVehicleModal v-if="showAddModal" @close="showAddModal = false" @refresh="onVehicleAdded" />
+    <CreateUserModal v-if="showCreateUserModal" @close="showCreateUserModal = false" @refresh="onUserCreated" />
     <UpdateExpiryModal v-if="showUpdateModal" :doc="selectedDoc" @close="showUpdateModal = false"
-        @refresh="fetchData" />
+        @refresh="onDocumentUpdated" />
     <DeleteConfirmModal v-if="showDeleteModal" :vehicleNumber="vehicleToDelete?.registration_number"
         :loading="deleteLoading" @close="showDeleteModal = false" @confirm="handleDelete" />
 </template>
