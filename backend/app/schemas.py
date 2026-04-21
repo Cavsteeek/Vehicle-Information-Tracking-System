@@ -43,7 +43,7 @@ class VesselDocumentResponse(BaseModel):
     issued_date: Optional[date] = None
     status: str
     last_updated_by: Optional[str] = None
-    last_updated_at: datetime
+    last_updated_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
@@ -76,7 +76,7 @@ class VehicleDocumentResponse(BaseModel):
     expiry_date: date
     status: str
     last_updated_by: Optional[str] = None
-    last_updated_at: datetime
+    last_updated_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True

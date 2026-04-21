@@ -34,16 +34,17 @@ const getStatus = (expiryDate, reminderDays) => {
     const diffTime = expiry - today
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
 
-    if (diffDays < 0) return { label: 'Expired', color: 'text-red-600 bg-red-50', border: 'border-red-200' }
-    if (diffDays <= reminderDays) return { label: `${diffDays} days left`, color: 'text-orange-600 bg-orange-50', border: 'border-orange-200' }
-    return { label: 'Active', color: 'text-green-600 bg-green-50', border: 'border-green-200' }
+    if (diffDays < 0) return { label: 'Expired', color: 'text-red-600 bg-red-50', border: 'border-red-200', cardBorder: 'border-red-300' }
+    if (diffDays <= reminderDays) return { label: `${diffDays} days left`, color: 'text-orange-600 bg-orange-50', border: 'border-orange-200', cardBorder: 'border-orange-300' }
+    return { label: 'Active', color: 'text-green-600 bg-green-50', border: 'border-green-200', cardBorder: 'border-green-400 border-2 shadow-md shadow-green-200' }
 }
 
 const emit = defineEmits(['renew'])
 </script>
 
 <template>
-    <div class="bg-white shadow-xl rounded-2xl p-4 sm:p-6 border border-gray-100 flex flex-col h-full">
+    <div
+        :class="['bg-white shadow-xl rounded-2xl p-4 sm:p-6 border flex flex-col h-full transition-all', 'border-gray-100']">
         <div class="mb-3 sm:mb-4">
             <h3 class="text-lg sm:text-xl font-black text-gray-800 uppercase tracking-tight">
                 {{ vehicle.registration_number }}
@@ -81,7 +82,7 @@ const emit = defineEmits(['renew'])
                 <span class="text-sm text-gray-800 font-black">{{ vehicle.owner }}</span>
                 <span class="text-[10px] text-gray-400 font-medium mt-1">Purchase Date: {{ vehicle.purchase_date ||
                     'N/A'
-                }}</span>
+                    }}</span>
             </div>
 
             <button @click="$emit('delete')" class="text-gray-300 hover:text-red-500 transition self-end pb-1">

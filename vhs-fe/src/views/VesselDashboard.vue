@@ -78,12 +78,6 @@ const handleDelete = async (doc) => {
 }
 
 onMounted(async () => {
-    // Restrict access: vessel-only users cannot access vehicle dashboard, redirect them
-    // Allow: admin, vessel, multi_dept users
-    if (!['vessel', 'admin', 'multi_dept'].includes(userRole.value)) {
-        router.push('/dashboard')
-        return
-    }
     await fetchVessels()
 })
 </script>
@@ -103,13 +97,12 @@ onMounted(async () => {
                     class="px-2 sm:px-4 py-2 text-xs sm:text-sm font-bold text-white bg-green-600 hover:bg-green-700 rounded-lg transition flex items-center gap-1 sm:gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4" viewBox="0 0 20 20"
                         fill="currentColor">
-                        <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
                         <path fill-rule="evenodd"
-                            d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
+                            d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
                             clip-rule="evenodd" />
                     </svg>
                     <span class="hidden sm:inline">Create User</span>
-                    <span class="sm:hidden">User</span>
+                    <span class="sm:hidden">New User</span>
                 </button>
                 <button v-if="userRole === 'admin' || userRole === 'multi_dept'" @click="router.push('/dashboard')"
                     class="px-2 sm:px-4 py-2 text-xs sm:text-sm font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition">

@@ -10,7 +10,7 @@ load_dotenv()
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = "HS256"
 # Use a default value in case .env fails to load
-ACCESS_TOKEN_EXPIRY = int(os.getenv("TOKEN_EXPIRY", 1440)) 
+ACCESS_TOKEN_EXPIRY = int(os.getenv("TOKEN_EXPIRY", 720)) 
 
 # --- REPLACED PASSLIB WITH BCRYPT ---
 

@@ -16,14 +16,15 @@ const getStatus = (expiryDate, reminderDays) => {
     const diffTime = expiry - today
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
 
-    if (diffDays < 0) return { label: 'Expired', color: 'text-red-600 bg-red-50', border: 'border-red-200' }
-    if (diffDays <= reminderDays) return { label: `${diffDays} days left`, color: 'text-orange-600 bg-orange-50', border: 'border-orange-200' }
-    return { label: 'Active', color: 'text-green-600 bg-green-50', border: 'border-green-200' }
+    if (diffDays < 0) return { label: 'Expired', color: 'text-red-600 bg-red-50', border: 'border-red-200', cardBorder: 'border-red-300' }
+    if (diffDays <= reminderDays) return { label: `${diffDays} days left`, color: 'text-orange-600 bg-orange-50', border: 'border-orange-200', cardBorder: 'border-orange-300' }
+    return { label: 'Active', color: 'text-green-600 bg-green-50', border: 'border-green-200', cardBorder: 'border-green-400 border-2 shadow-md shadow-green-200' }
 }
 </script>
 
 <template>
-    <div class="bg-white shadow-xl rounded-2xl p-6 border border-gray-100 flex flex-col h-full">
+    <div
+        :class="['bg-white shadow-xl rounded-2xl p-6 border flex flex-col h-full transition-all', getStatus(doc.expiry_date, doc.reminder_start_days).cardBorder]">
         <div class="mb-4">
             <h3 class="text-xl font-black text-gray-800 uppercase tracking-tight">{{ doc.title }}</h3>
             <span class="text-[10px] font-bold px-2 py-1 bg-gray-100 text-gray-500 rounded uppercase">{{ doc.issued_date
