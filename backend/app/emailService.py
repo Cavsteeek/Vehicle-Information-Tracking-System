@@ -22,7 +22,7 @@ def send_email(to, subject, body):
         
         # Brevo API Payload
         payload = {
-            "sender": {"email": sender_email, "name": "Vehicle Monitor"},
+            "sender": {"email": sender_email, "name": "VPMS"},
             "to": [{"email": to}],
             "subject": subject,
             "htmlContent": body
