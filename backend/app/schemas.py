@@ -34,7 +34,7 @@ class VesselDocumentCreate(BaseModel):
     title: str
     expiry_date: date
     issued_date: Optional[date] = None
-    reminder_start_days: int = 21
+    reminder_start_days: int = 30
 
 class VesselDocumentResponse(BaseModel):
     id: int
@@ -68,7 +68,7 @@ class VesselResponse(BaseModel):
 class VehicleDocumentCreate(BaseModel):
     document_type: str
     expiry_date: date
-    reminder_start_days: int = 21
+    reminder_start_days: int = 30
 
 class VehicleDocumentResponse(BaseModel):
     id: int

@@ -72,7 +72,7 @@ class VehicleDocument(Base):
     expiry_date = Column(Date)
 
     # Reminder config
-    reminder_start_days = Column(Integer, default=21)
+    reminder_start_days = Column(Integer, default=30)
     last_notified_at = Column(Date, nullable=True)
 
     # Non-repudiation
@@ -108,7 +108,7 @@ class VesselDocument(Base):
     expiry_date = Column(Date, nullable=False)
     issued_date = Column(Date, nullable=True)
 
-    reminder_start_days = Column(Integer, default=21)
+    reminder_start_days = Column(Integer, default=30)
     last_notified_at = Column(Date, nullable=True)
 
     last_updated_by = Column(String)
